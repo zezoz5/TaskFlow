@@ -1,4 +1,4 @@
-using TaskManager.core.Enums;
+using TaskManager.Core.Enums;
 
 namespace TaskManager.Core.Entities
 {
@@ -6,6 +6,7 @@ namespace TaskManager.Core.Entities
     {
         public string UserId { get; set; } = null!;
         public AppUser AppUser { get; set; } = null!;
+
         public Guid WorkspaceId { get; set; }
         public Workspace Workspace { get; set; } = null!;
 

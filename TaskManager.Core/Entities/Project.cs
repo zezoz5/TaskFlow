@@ -1,4 +1,4 @@
-using TaskManager.core.Enums;
+using TaskManager.Core.Enums;
 
 namespace TaskManager.Core.Entities
 {

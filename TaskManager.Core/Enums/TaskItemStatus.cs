@@ -1,3 +1,3 @@
-namespace TaskManager.core.Enums;
+namespace TaskManager.Core.Enums;
 
 public enum TaskItemStatus { Todo, InProgress, Done }

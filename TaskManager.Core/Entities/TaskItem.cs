@@ -1,4 +1,4 @@
-using TaskManager.core.Enums;
+using TaskManager.Core.Enums;
 
 namespace TaskManager.Core.Entities
 {
@@ -16,6 +16,8 @@ namespace TaskManager.Core.Entities
         public AppUser TaskCreator { get; set; } = null!;
         public string? AssignedToId { get; set; }
         public AppUser? AssignedTo { get; set; } = null!;
+        public Guid ProjectId { get; set; }
+        public Project Project { get; set; } = null!;
         public ICollection<Comment> Comments { get; set; } = [];
     }
 }

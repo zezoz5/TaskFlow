@@ -21,7 +21,7 @@ namespace TaskManager.Infrastructure.Configurations
                 .HasConversion<string>();
 
             builder.HasMany(x => x.Tasks)
-                .WithOne()
+                .WithOne(x => x.Project)
                 .HasForeignKey(x => x.ProjectId)
                 .OnDelete(DeleteBehavior.Cascade);
         }

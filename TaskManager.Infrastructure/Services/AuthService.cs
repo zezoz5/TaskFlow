@@ -6,6 +6,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using TaskManager.Core.DTOs.Auth;
 using TaskManager.Core.Entities;
+using TaskManager.Core.Exceptions;
 using TaskManager.Core.Interfaces;
 
 namespace TaskManager.Infrastructure.Services
@@ -21,7 +22,7 @@ namespace TaskManager.Infrastructure.Services
             var existingUser = await _user.FindByEmailAsync(registerDto.Email);
             if (existingUser != null)
             {
-                throw new Exception("Email already exist");
+                throw new AppException("Email already exist", 400);
             }
 
             // Create a new AppUser from the RegisterDto
@@ -39,7 +40,7 @@ namespace TaskManager.Infrastructure.Services
             if (!user.Succeeded)
             {
                 var errors = string.Join(", ", user.Errors.Select(e => e.Description));
-                throw new Exception(errors);
+                throw new AppException(errors, 400);
             }
 
             // Generate a JWT token
@@ -58,10 +59,10 @@ namespace TaskManager.Infrastructure.Services
 
         public async Task<AuthResponseDto> LoginAsync(LoginDto loginDto)
         {
-            var user = await _user.FindByEmailAsync(loginDto.Email) ?? throw new Exception("Email not found");
+            var user = await _user.FindByEmailAsync(loginDto.Email) ?? throw new AppException("Email not found", 400);
             if (!await _user.CheckPasswordAsync(user, loginDto.Password))
             {
-                throw new Exception("Incorrect password");
+                throw new AppException("Incorrect password", 400);
             }
 
             var token = JwtTokenGeneration(user);

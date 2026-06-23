@@ -3,8 +3,9 @@ using TaskManager.Core.Exceptions;
 
 namespace TaskManager.API.Middleware
 {
-    public class ExceptionMiddleware(RequestDelegate next)
+    public class ExceptionMiddleware(RequestDelegate next, ILogger<ExceptionMiddleware> logger)
     {
+        private readonly ILogger<ExceptionMiddleware> _logger = logger;
         private readonly RequestDelegate _next = next;
 
         public async Task InvokeAsync(HttpContext context)
@@ -25,8 +26,9 @@ namespace TaskManager.API.Middleware
                 };
                 await context.Response.WriteAsJsonAsync(error);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                _logger.LogError(ex, "Unhandled exception. ErrorId: {ErrorId}", errorId);
                 context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
                 context.Response.ContentType = "application/json";
                 var error = new

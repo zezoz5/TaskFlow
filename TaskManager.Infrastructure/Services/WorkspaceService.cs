@@ -80,23 +80,27 @@ namespace TaskManager.Infrastructure.Services
 
         public async Task<WorkspaceDto> UpdateWorkspace(Guid workspaceId, UpdateWorkspaceDto dto, string userId)
         {
-            var workspace = await _context.Workspaces.FirstOrDefaultAsync(w => w.Id == workspaceId && w.OwnerId == userId);
+            var member = await _context.WorkspaceMembers
+            .Include(w => w.Workspace)
+            .FirstOrDefaultAsync(wm => wm.WorkspaceId == workspaceId &&
+                wm.UserId == userId &&
+                (wm.Role == WorkspaceRole.Owner || wm.Role == WorkspaceRole.Manager));
 
-            if (workspace != null)
+            if (member?.Workspace != null)
             {
-                workspace.Name = dto.Name ?? workspace.Name;
-                workspace.Description = dto.Description ?? workspace.Description;
+                member.Workspace.Name = dto.Name ?? member.Workspace.Name;
+                member.Workspace.Description = dto.Description ?? member.Workspace.Description;
 
-                _context.Workspaces.Update(workspace);
+                _context.Workspaces.Update(member.Workspace);
                 await _context.SaveChangesAsync();
 
                 return new WorkspaceDto
                 {
-                    Id = workspace.Id,
-                    OwnerId = workspace.OwnerId,
-                    Name = workspace.Name,
-                    Description = workspace.Description,
-                    CreatedAt = workspace.CreatedAt
+                    Id = member.Workspace.Id,
+                    OwnerId = member.Workspace.OwnerId,
+                    Name = member.Workspace.Name,
+                    Description = member.Workspace.Description,
+                    CreatedAt = member.Workspace.CreatedAt
                 };
             }
             else

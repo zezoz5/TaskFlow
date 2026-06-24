@@ -71,8 +71,8 @@ namespace TaskManager.API.Controllers
             var userId = User.FindFirstValue(JwtRegisteredClaimNames.Sub);
             if (userId != null)
             {
-                await _service.UpdateWorkspace(id, dto, userId);
-                return Ok();
+                var updatedWorkspace = await _service.UpdateWorkspace(id, dto, userId);
+                return Ok(updatedWorkspace);
             }
             return Unauthorized();
         }
@@ -85,7 +85,7 @@ namespace TaskManager.API.Controllers
             if (userId != null)
             {
                 await _service.DeleteWorkspace(id, userId);
-                return Ok();
+                return NoContent();
             }
             return Unauthorized();
         }

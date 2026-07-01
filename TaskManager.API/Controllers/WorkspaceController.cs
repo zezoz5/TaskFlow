@@ -18,76 +18,55 @@ namespace TaskManager.API.Controllers
         public async Task<IActionResult> GetAllWorkspaces()
         {
             var userId = User.FindFirstValue(JwtRegisteredClaimNames.Sub);
-            if (userId != null)
-            {
-                var workspaces = await _service.GetAll(userId);
-                return Ok(workspaces);
-            }
-            else
-            {
-                return Unauthorized();
-            }
+            if (userId == null) return Unauthorized();
+
+            var workspaces = await _service.GetAll(userId);
+            return Ok(workspaces);
         }
 
-        [HttpGet]
-        [Route("{id}")]
+        [HttpGet("{id}")]
         public async Task<IActionResult> GetById([FromRoute] Guid id)
         {
             var userId = User.FindFirstValue(JwtRegisteredClaimNames.Sub);
-            if (userId != null)
-            {
-                var workspace = await _service.GetById(id, userId);
-                return Ok(workspace);
-            }
-            else
-            {
-                return Unauthorized();
-            }
+            if (userId == null) return Unauthorized();
+
+            var workspace = await _service.GetById(id, userId);
+            return Ok(workspace);
         }
 
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] CreateWorkspaceDto dto)
         {
             var userId = User.FindFirstValue(JwtRegisteredClaimNames.Sub);
-            if (userId != null)
-            {
-                var workspace = await _service.CreateWorkspace(dto, userId);
-                return CreatedAtAction(
-                    actionName: nameof(GetById),
-                    routeValues: new { id = workspace.Id },
-                    value: workspace
-                );
-            }
-            else
-            {
-                return Unauthorized();
-            }
+            if (userId == null) return Unauthorized();
+
+            var workspace = await _service.CreateWorkspace(dto, userId);
+            return CreatedAtAction(
+                actionName: nameof(GetById),
+                routeValues: new { id = workspace.Id },
+                value: workspace
+            );
         }
 
-        [HttpPut]
-        [Route("{id}")]
+        [HttpPut("{id}")]
         public async Task<IActionResult> Update([FromRoute] Guid id, [FromBody] UpdateWorkspaceDto dto)
         {
             var userId = User.FindFirstValue(JwtRegisteredClaimNames.Sub);
-            if (userId != null)
-            {
-                var updatedWorkspace = await _service.UpdateWorkspace(id, dto, userId);
-                return Ok(updatedWorkspace);
-            }
-            return Unauthorized();
+            if (userId == null) return Unauthorized();
+
+            var updatedWorkspace = await _service.UpdateWorkspace(id, dto, userId);
+            return Ok(updatedWorkspace);
         }
 
-        [HttpDelete]
-        [Route("{id}")]
+        [HttpDelete("{id}")]
         public async Task<IActionResult> Delete([FromRoute] Guid id)
         {
             var userId = User.FindFirstValue(JwtRegisteredClaimNames.Sub);
-            if (userId != null)
-            {
-                await _service.DeleteWorkspace(id, userId);
-                return NoContent();
-            }
-            return Unauthorized();
+            if (userId == null) return Unauthorized();
+
+            await _service.DeleteWorkspace(id, userId);
+
+            return NoContent();
         }
     }
 }

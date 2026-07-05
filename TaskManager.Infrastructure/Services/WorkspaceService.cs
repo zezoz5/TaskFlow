@@ -84,29 +84,23 @@ namespace TaskManager.Infrastructure.Services
             .Include(w => w.Workspace)
             .FirstOrDefaultAsync(wm => wm.WorkspaceId == workspaceId &&
                 wm.UserId == userId &&
-                (wm.Role == WorkspaceRole.Owner || wm.Role == WorkspaceRole.Manager));
+                (wm.Role == WorkspaceRole.Owner || wm.Role == WorkspaceRole.Manager))
+                ?? throw new AppException("Workspace Not Found", 404);
 
-            if (member?.Workspace != null)
+            member.Workspace.Name = dto.Name ?? member.Workspace.Name;
+            member.Workspace.Description = dto.Description ?? member.Workspace.Description;
+
+            _context.Workspaces.Update(member.Workspace);
+            await _context.SaveChangesAsync();
+
+            return new WorkspaceDto
             {
-                member.Workspace.Name = dto.Name ?? member.Workspace.Name;
-                member.Workspace.Description = dto.Description ?? member.Workspace.Description;
-
-                _context.Workspaces.Update(member.Workspace);
-                await _context.SaveChangesAsync();
-
-                return new WorkspaceDto
-                {
-                    Id = member.Workspace.Id,
-                    OwnerId = member.Workspace.OwnerId,
-                    Name = member.Workspace.Name,
-                    Description = member.Workspace.Description,
-                    CreatedAt = member.Workspace.CreatedAt
-                };
-            }
-            else
-            {
-                throw new AppException("Workspace Not Found", 404);
-            }
+                Id = member.Workspace.Id,
+                OwnerId = member.Workspace.OwnerId,
+                Name = member.Workspace.Name,
+                Description = member.Workspace.Description,
+                CreatedAt = member.Workspace.CreatedAt
+            };
         }
 
         public async Task DeleteWorkspace(Guid workspaceId, string userId)

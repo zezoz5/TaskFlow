@@ -7,7 +7,7 @@ namespace TaskManager.Core.Entities
         public Guid Id { get; set; } = Guid.NewGuid();
         public string Title { get; set; } = null!;
         public string? Description { get; set; }
-        public TaskItemStatus Status { get; set; }
+        public TaskItemStatus Status { get; set; } = TaskItemStatus.Todo;
         public TaskItemPriority Priority { get; set; }
         public DateTime? Deadline { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

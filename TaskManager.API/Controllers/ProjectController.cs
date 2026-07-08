@@ -17,7 +17,7 @@ namespace TaskManager.API.Controllers
         private readonly IProjectService _service = service;
 
         [HttpGet]
-        public async Task<IActionResult> GetAll([FromRoute] Guid workspaceId)
+        public async Task<IActionResult> GetAllProjects([FromRoute] Guid workspaceId)
         {
             var userId = User.FindFirstValue(JwtRegisteredClaimNames.Sub);
             if (userId == null) return Unauthorized();
@@ -27,7 +27,7 @@ namespace TaskManager.API.Controllers
         }
 
         [HttpGet("{projectId}")]
-        public async Task<IActionResult> GetById([FromRoute] Guid workspaceId, [FromRoute] Guid projectId)
+        public async Task<IActionResult> GetProjectById([FromRoute] Guid workspaceId, [FromRoute] Guid projectId)
         {
             var userId = User.FindFirstValue(JwtRegisteredClaimNames.Sub);
             if (userId == null) return Unauthorized();
@@ -37,21 +37,21 @@ namespace TaskManager.API.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Create([FromRoute] Guid workspaceId, [FromBody] CreateProjectDto dto)
+        public async Task<IActionResult> CreateProject([FromRoute] Guid workspaceId, [FromBody] CreateProjectDto dto)
         {
             var userId = User.FindFirstValue(JwtRegisteredClaimNames.Sub);
             if (userId == null) return Unauthorized();
 
             var newProject = await _service.CreateProjectAsync(userId, workspaceId, dto);
             return CreatedAtAction(
-                actionName: nameof(GetById),
-                routeValues: new { workspaceId = newProject.WorkspaceId, projectId = newProject.Id },
+                actionName: nameof(GetProjectById),
+                routeValues: new { workspaceId, projectId = newProject.Id },
                 value: newProject
             );
         }
 
         [HttpPut("{projectId}")]
-        public async Task<IActionResult> Update([FromRoute] Guid workspaceId, [FromRoute] Guid projectId, [FromBody] UpdateProjectDto dto)
+        public async Task<IActionResult> UpdateProject([FromRoute] Guid workspaceId, [FromRoute] Guid projectId, [FromBody] UpdateProjectDto dto)
         {
             var userId = User.FindFirstValue(JwtRegisteredClaimNames.Sub);
             if (userId == null) return Unauthorized();
@@ -62,7 +62,7 @@ namespace TaskManager.API.Controllers
         }
 
         [HttpDelete("{projectId}")]
-        public async Task<IActionResult> Delete([FromRoute] Guid workspaceId, [FromRoute] Guid projectId)
+        public async Task<IActionResult> DeleteProject([FromRoute] Guid workspaceId, [FromRoute] Guid projectId)
         {
             var userId = User.FindFirstValue(JwtRegisteredClaimNames.Sub);
             if (userId == null) return Unauthorized();

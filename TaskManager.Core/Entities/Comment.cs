@@ -2,7 +2,7 @@ namespace TaskManager.Core.Entities
 {
     public class Comment
     {
-        public Guid Id { get; set; }
+        public Guid Id { get; set; } = Guid.NewGuid();
         public string Body { get; set; } = null!;
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 

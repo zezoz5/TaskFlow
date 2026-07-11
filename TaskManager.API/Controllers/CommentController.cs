@@ -15,7 +15,7 @@ namespace TaskManager.API.Controllers
         private readonly ICommentService _service = service;
 
         [HttpGet]
-        public async Task<IActionResult> GetAllTasks([FromRoute] Guid workspaceId, [FromRoute] Guid taskId)
+        public async Task<IActionResult> GetAllComments([FromRoute] Guid workspaceId, [FromRoute] Guid taskId)
         {
             var userId = User.FindFirstValue(JwtRegisteredClaimNames.Sub);
             if (userId == null) return Unauthorized();
@@ -26,7 +26,7 @@ namespace TaskManager.API.Controllers
         }
 
         [HttpGet("{commentId}")]
-        public async Task<IActionResult> GetTaskById([FromRoute] Guid workspaceId, [FromRoute] Guid taskId, [FromRoute] Guid commentId)
+        public async Task<IActionResult> GetCommentById([FromRoute] Guid workspaceId, [FromRoute] Guid taskId, [FromRoute] Guid commentId)
         {
             var userId = User.FindFirstValue(JwtRegisteredClaimNames.Sub);
             if (userId == null) return Unauthorized();
@@ -37,7 +37,7 @@ namespace TaskManager.API.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> CreateTask([FromRoute] Guid workspaceId, [FromRoute] Guid taskId, [FromRoute] Guid projectId, [FromBody] CreateCommentDto dto)
+        public async Task<IActionResult> CreateComment([FromRoute] Guid workspaceId, [FromRoute] Guid taskId, [FromRoute] Guid projectId, [FromBody] CreateCommentDto dto)
         {
             var userId = User.FindFirstValue(JwtRegisteredClaimNames.Sub);
             if (userId == null) return Unauthorized();
@@ -45,14 +45,14 @@ namespace TaskManager.API.Controllers
             var newComment = await _service.CreateCommentAsync(userId, workspaceId, taskId, dto);
 
             return CreatedAtAction(
-                actionName: nameof(GetTaskById),
+                actionName: nameof(GetCommentById),
                 routeValues: new { workspaceId, projectId, taskId, commentId = newComment.Id },
                 value: newComment
                 );
         }
 
         [HttpPut("{commentId}")]
-        public async Task<IActionResult> UpdateTask([FromRoute] Guid workspaceId, [FromRoute] Guid taskId, [FromRoute] Guid commentId, [FromBody] UpdateCommentDto dto)
+        public async Task<IActionResult> UpdateComment([FromRoute] Guid workspaceId, [FromRoute] Guid taskId, [FromRoute] Guid commentId, [FromBody] UpdateCommentDto dto)
         {
             var userId = User.FindFirstValue(JwtRegisteredClaimNames.Sub);
             if (userId == null) return Unauthorized();
@@ -63,7 +63,7 @@ namespace TaskManager.API.Controllers
         }
 
         [HttpDelete("{commentId}")]
-        public async Task<IActionResult> UpdateTask([FromRoute] Guid workspaceId, [FromRoute] Guid taskId, [FromRoute] Guid commentId)
+        public async Task<IActionResult> DeleteComment([FromRoute] Guid workspaceId, [FromRoute] Guid taskId, [FromRoute] Guid commentId)
         {
             var userId = User.FindFirstValue(JwtRegisteredClaimNames.Sub);
             if (userId == null) return Unauthorized();

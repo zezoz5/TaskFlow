@@ -1,189 +1,219 @@
+using Azure;
 using Microsoft.EntityFrameworkCore;
+using TaskManager.Core.DTOs;
 using TaskManager.Core.DTOs.Task;
 using TaskManager.Core.Entities;
 using TaskManager.Core.Exceptions;
 using TaskManager.Core.Interfaces;
 using TaskManager.Infrastructure.Data;
 
-namespace TaskManager.Infrastructure.Services
+namespace TaskManager.Infrastructure.Services;
+
+public class TaskItemService(AppDbContext context) : ITaskItemService
 {
-    public class TaskItemService(AppDbContext context) : ITaskItemService
+    private readonly AppDbContext _context = context;
+    public async Task<PageResult<TaskItemDto>> GetAllTasksAsync(string userId, Guid workspaceId, Guid projectId, TaskQueryParamsDto queryDto)
     {
-        private readonly AppDbContext _context = context;
-        public async Task<IEnumerable<TaskItemDto>> GetAllTasksAsync(string userId, Guid workspaceId, Guid projectId)
-        {
-            var member = await GetMemberAsync(userId, workspaceId)
-                ?? throw new AppException("You are not a member of this workspace", 403);
+        var member = await GetMemberAsync(userId, workspaceId)
+            ?? throw new AppException("You are not a member of this workspace", 403);
 
-            return await _context.TaskItems
-                .Where(t => t.ProjectId == projectId)
-                .Select(t => new TaskItemDto
-                {
-                    Id = t.Id,
-                    ProjectId = t.ProjectId,
-                    CreatorId = t.CreatorId,
-                    AssignedToId = t.AssignedToId,
-                    Title = t.Title,
-                    Description = t.Description,
-                    Status = t.Status,
-                    Priority = t.Priority,
-                    Deadline = t.Deadline,
-                    CreatedAt = t.CreatedAt,
-                })
-                .ToListAsync();
-        }
+        var query = _context.TaskItems.Where(q => q.ProjectId == projectId);
 
-        public async Task<TaskItemDto> GetTaskByIdAsync(string userId, Guid workspaceId, Guid projectId, Guid taskId)
-        {
-            var member = await GetMemberAsync(userId, workspaceId)
-                ?? throw new AppException("You are not a member of this workspace", 403);
+        if (queryDto.Status != null)
+            query = query.Where(q => q.Status == queryDto.Status);
 
-            var task = await _context.TaskItems
-                .FirstOrDefaultAsync(t => t.ProjectId == projectId && t.Id == taskId)
-                ?? throw new AppException("Task not found", 404);
+        if (queryDto.Priority != null)
+            query = query.Where(q => q.Priority == queryDto.Priority);
 
-            return new TaskItemDto
+        if (queryDto.DeadlineBefore != null)
+            query = query.Where(q => q.Deadline <= queryDto.DeadlineBefore);
+
+        if (queryDto.AssignedToId != null)
+            query = query.Where(q => q.AssignedToId == queryDto.AssignedToId);
+
+        if (queryDto.PageSize > 50) queryDto.PageSize = 50;
+        if (queryDto.PageSize < 1) queryDto.PageSize = 1;
+        if (queryDto.Page < 1) queryDto.Page = 1;
+
+        var totalCount = await query.CountAsync();
+
+        var tasks = await query
+            .Skip((queryDto.Page - 1) * queryDto.PageSize)
+            .Take(queryDto.PageSize)
+            .Select(t => new TaskItemDto
             {
-                Id = task.Id,
-                ProjectId = task.ProjectId,
-                CreatorId = task.CreatorId,
-                AssignedToId = task.AssignedToId,
-                Title = task.Title,
-                Description = task.Description,
-                Status = task.Status,
-                Priority = task.Priority,
-                Deadline = task.Deadline,
-                CreatedAt = task.CreatedAt,
-            };
-        }
+                Id = t.Id,
+                ProjectId = t.ProjectId,
+                CreatorId = t.CreatorId,
+                AssignedToId = t.AssignedToId,
+                Title = t.Title,
+                Description = t.Description,
+                Status = t.Status,
+                Priority = t.Priority,
+                Deadline = t.Deadline,
+                CreatedAt = t.CreatedAt,
+            })
+            .ToListAsync();
 
-        public async Task<TaskItemDto> CreateTaskAsync(string userId, Guid workspaceId, Guid projectId, CreateTaskItemDto dto)
+        return new PageResult<TaskItemDto>
         {
-            var member = await GetMemberAsync(userId, workspaceId)
-                ?? throw new AppException("You are not a member of this workspace", 403);
+            Items = tasks,
+            Page = queryDto.Page,
+            PageSize = queryDto.PageSize,
+            TotalCount = totalCount
+        };
+    }
 
-            if (member.Role != Core.Enums.WorkspaceRole.Owner && member.Role != Core.Enums.WorkspaceRole.Manager)
-                throw new AppException("You are not Authorized to create a task", 403);
+    public async Task<TaskItemDto> GetTaskByIdAsync(string userId, Guid workspaceId, Guid projectId, Guid taskId)
+    {
+        var member = await GetMemberAsync(userId, workspaceId)
+            ?? throw new AppException("You are not a member of this workspace", 403);
 
-            if (dto.AssignedToId != null)
-            {
-                var assignedToTask = await GetMemberAsync(dto.AssignedToId, workspaceId)
-                    ?? throw new AppException("No member with this Id was be found", 400);
-            }
+        var task = await _context.TaskItems
+            .FirstOrDefaultAsync(t => t.ProjectId == projectId && t.Id == taskId)
+            ?? throw new AppException("Task not found", 404);
 
-            var newTask = new TaskItem
-            {
-                ProjectId = projectId,
-                CreatorId = userId,
-                AssignedToId = dto.AssignedToId,
-                Title = dto.Title,
-                Description = dto.Description,
-                Priority = dto.Priority,
-                Deadline = dto.Deadline,
-            };
-
-            _context.TaskItems.Add(newTask);
-            await _context.SaveChangesAsync();
-
-            return new TaskItemDto
-            {
-                Id = newTask.Id,
-                ProjectId = newTask.ProjectId,
-                CreatorId = newTask.CreatorId,
-                AssignedToId = newTask.AssignedToId,
-                Title = newTask.Title,
-                Description = newTask.Description,
-                Status = newTask.Status,
-                Priority = newTask.Priority,
-                Deadline = newTask.Deadline,
-                CreatedAt = newTask.CreatedAt,
-            };
-        }
-
-        public async Task<TaskItemDto> UpdateTaskAsync(string userId, Guid workspaceId, Guid projectId, Guid taskId, UpdateTaskItemDto dto)
+        return new TaskItemDto
         {
-            var member = await GetMemberAsync(userId, workspaceId)
-                ?? throw new AppException("You are not a member of this workspace", 403);
+            Id = task.Id,
+            ProjectId = task.ProjectId,
+            CreatorId = task.CreatorId,
+            AssignedToId = task.AssignedToId,
+            Title = task.Title,
+            Description = task.Description,
+            Status = task.Status,
+            Priority = task.Priority,
+            Deadline = task.Deadline,
+            CreatedAt = task.CreatedAt,
+        };
+    }
 
-            if (member.Role != Core.Enums.WorkspaceRole.Owner && member.Role != Core.Enums.WorkspaceRole.Manager)
-                throw new AppException("You are not Authorized to Update a task", 403);
+    public async Task<TaskItemDto> CreateTaskAsync(string userId, Guid workspaceId, Guid projectId, CreateTaskItemDto dto)
+    {
+        var member = await GetMemberAsync(userId, workspaceId)
+            ?? throw new AppException("You are not a member of this workspace", 403);
 
-            var task = await _context.TaskItems
-                .FirstOrDefaultAsync(t => t.Id == taskId)
-                ?? throw new AppException("Task does not exist", 404);
+        if (member.Role != Core.Enums.WorkspaceRole.Owner && member.Role != Core.Enums.WorkspaceRole.Manager)
+            throw new AppException("You are not Authorized to create a task", 403);
 
-            task.Title = dto.Title ?? task.Title;
-            task.Description = dto.Description ?? task.Description;
-            task.Deadline = dto.Deadline ?? task.Deadline;
-            task.Priority = dto.Priority ?? task.Priority;
-
-            _context.TaskItems.Update(task);
-            await _context.SaveChangesAsync();
-
-            return new TaskItemDto
-            {
-                Id = task.Id,
-                ProjectId = task.ProjectId,
-                CreatorId = task.CreatorId,
-                AssignedToId = task.AssignedToId,
-                Title = task.Title,
-                Description = task.Description,
-                Status = task.Status,
-                Priority = task.Priority,
-                Deadline = task.Deadline,
-                CreatedAt = task.CreatedAt,
-            };
-        }
-
-        public async Task<TaskItemDto> UpdateTaskStatusAsync(string userId, Guid workspaceId, Guid projectId, Guid taskId, UpdateTaskItemStatusDto dto)
+        if (dto.AssignedToId != null)
         {
-            var member = await GetMemberAsync(userId, workspaceId)
-                ?? throw new AppException("You are not a member of this workspace", 403);
-
-            var task = await _context.TaskItems
-                .FirstOrDefaultAsync(t => t.Id == taskId)
-                ?? throw new AppException("Task does not exist", 404);
-
-            task.Status = dto.Status;
-
-            _context.TaskItems.Update(task);
-            await _context.SaveChangesAsync();
-
-            return new TaskItemDto
-            {
-                Id = task.Id,
-                ProjectId = task.ProjectId,
-                CreatorId = task.CreatorId,
-                AssignedToId = task.AssignedToId,
-                Title = task.Title,
-                Description = task.Description,
-                Status = task.Status,
-                Priority = task.Priority,
-                Deadline = task.Deadline,
-                CreatedAt = task.CreatedAt,
-            };
+            var assignedToTask = await GetMemberAsync(dto.AssignedToId, workspaceId)
+                ?? throw new AppException("No member with this Id was be found", 400);
         }
 
-        public async Task RemoveTaskAsync(string userId, Guid workspaceId, Guid projectId, Guid taskId)
+        var newTask = new TaskItem
         {
-            var member = await GetMemberAsync(userId, workspaceId)
-                ?? throw new AppException("You are not a member of this workspace", 403);
+            ProjectId = projectId,
+            CreatorId = userId,
+            AssignedToId = dto.AssignedToId,
+            Title = dto.Title,
+            Description = dto.Description,
+            Priority = dto.Priority,
+            Deadline = dto.Deadline,
+        };
 
-            if (member.Role != Core.Enums.WorkspaceRole.Owner && member.Role != Core.Enums.WorkspaceRole.Manager)
-                throw new AppException("You are not Authorized to Delete a task", 403);
+        _context.TaskItems.Add(newTask);
+        await _context.SaveChangesAsync();
 
-            var task = await _context.TaskItems
-                .FirstOrDefaultAsync(t => t.Id == taskId)
-                ?? throw new AppException("Task does not exist", 404);
-
-            _context.TaskItems.Remove(task);
-            await _context.SaveChangesAsync();
-        }
-
-        private async Task<WorkspaceMember?> GetMemberAsync(string userId, Guid workspaceId)
+        return new TaskItemDto
         {
-            return await _context.WorkspaceMembers
-            .FirstOrDefaultAsync(wm => wm.UserId == userId && wm.WorkspaceId == workspaceId);
-        }
+            Id = newTask.Id,
+            ProjectId = newTask.ProjectId,
+            CreatorId = newTask.CreatorId,
+            AssignedToId = newTask.AssignedToId,
+            Title = newTask.Title,
+            Description = newTask.Description,
+            Status = newTask.Status,
+            Priority = newTask.Priority,
+            Deadline = newTask.Deadline,
+            CreatedAt = newTask.CreatedAt,
+        };
+    }
+
+    public async Task<TaskItemDto> UpdateTaskAsync(string userId, Guid workspaceId, Guid projectId, Guid taskId, UpdateTaskItemDto dto)
+    {
+        var member = await GetMemberAsync(userId, workspaceId)
+            ?? throw new AppException("You are not a member of this workspace", 403);
+
+        if (member.Role != Core.Enums.WorkspaceRole.Owner && member.Role != Core.Enums.WorkspaceRole.Manager)
+            throw new AppException("You are not Authorized to Update a task", 403);
+
+        var task = await _context.TaskItems
+            .FirstOrDefaultAsync(t => t.Id == taskId)
+            ?? throw new AppException("Task does not exist", 404);
+
+        task.Title = dto.Title ?? task.Title;
+        task.Description = dto.Description ?? task.Description;
+        task.Deadline = dto.Deadline ?? task.Deadline;
+        task.Priority = dto.Priority ?? task.Priority;
+
+        _context.TaskItems.Update(task);
+        await _context.SaveChangesAsync();
+
+        return new TaskItemDto
+        {
+            Id = task.Id,
+            ProjectId = task.ProjectId,
+            CreatorId = task.CreatorId,
+            AssignedToId = task.AssignedToId,
+            Title = task.Title,
+            Description = task.Description,
+            Status = task.Status,
+            Priority = task.Priority,
+            Deadline = task.Deadline,
+            CreatedAt = task.CreatedAt,
+        };
+    }
+
+    public async Task<TaskItemDto> UpdateTaskStatusAsync(string userId, Guid workspaceId, Guid projectId, Guid taskId, UpdateTaskItemStatusDto dto)
+    {
+        var member = await GetMemberAsync(userId, workspaceId)
+            ?? throw new AppException("You are not a member of this workspace", 403);
+
+        var task = await _context.TaskItems
+            .FirstOrDefaultAsync(t => t.Id == taskId)
+            ?? throw new AppException("Task does not exist", 404);
+
+        task.Status = dto.Status;
+
+        _context.TaskItems.Update(task);
+        await _context.SaveChangesAsync();
+
+        return new TaskItemDto
+        {
+            Id = task.Id,
+            ProjectId = task.ProjectId,
+            CreatorId = task.CreatorId,
+            AssignedToId = task.AssignedToId,
+            Title = task.Title,
+            Description = task.Description,
+            Status = task.Status,
+            Priority = task.Priority,
+            Deadline = task.Deadline,
+            CreatedAt = task.CreatedAt,
+        };
+    }
+
+    public async Task RemoveTaskAsync(string userId, Guid workspaceId, Guid projectId, Guid taskId)
+    {
+        var member = await GetMemberAsync(userId, workspaceId)
+            ?? throw new AppException("You are not a member of this workspace", 403);
+
+        if (member.Role != Core.Enums.WorkspaceRole.Owner && member.Role != Core.Enums.WorkspaceRole.Manager)
+            throw new AppException("You are not Authorized to Delete a task", 403);
+
+        var task = await _context.TaskItems
+            .FirstOrDefaultAsync(t => t.Id == taskId)
+            ?? throw new AppException("Task does not exist", 404);
+
+        _context.TaskItems.Remove(task);
+        await _context.SaveChangesAsync();
+    }
+
+    private async Task<WorkspaceMember?> GetMemberAsync(string userId, Guid workspaceId)
+    {
+        return await _context.WorkspaceMembers
+        .FirstOrDefaultAsync(wm => wm.UserId == userId && wm.WorkspaceId == workspaceId);
     }
 }

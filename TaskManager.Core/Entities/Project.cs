@@ -1,17 +1,16 @@
 using TaskManager.Core.Enums;
 
-namespace TaskManager.Core.Entities
-{
-    public class Project
-    {
-        public Guid Id { get; set; } = Guid.NewGuid();
-        public string Name { get; set; } = string.Empty;
-        public string? Description { get; set; }
-        public ProjectStatus Status { get; set; }
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+namespace TaskManager.Core.Entities;
 
-        public Guid WorkspaceId { get; set; }
-        public Workspace Workspace { get; set; } = null!;
-        public ICollection<TaskItem> Tasks { get; set; } = [];
-    }
+public class Project
+{
+    public Guid Id { get; set; } = Guid.NewGuid();
+    public string Name { get; set; } = string.Empty;
+    public string? Description { get; set; }
+    public ProjectStatus Status { get; set; }
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+    public Guid WorkspaceId { get; set; }
+    public Workspace Workspace { get; set; } = null!;
+    public ICollection<TaskItem> Tasks { get; set; } = [];
 }

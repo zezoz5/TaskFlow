@@ -1,11 +1,10 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace TaskManager.Core.DTOs.WorkspaceMember
+namespace TaskManager.Core.DTOs.WorkspaceMember;
+
+public class AddWorkspaceMemberDto
 {
-    public class AddWorkspaceMemberDto
-    {
-        [Required]
-        [EmailAddress]
-        public string Email { get; set; } = null!;
-    }
+    [Required]
+    [EmailAddress]
+    public string Email { get; set; } = null!;
 }

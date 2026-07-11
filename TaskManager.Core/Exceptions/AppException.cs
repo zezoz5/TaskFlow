@@ -1,7 +1,6 @@
-namespace TaskManager.Core.Exceptions
+namespace TaskManager.Core.Exceptions;
+
+public class AppException(string message, int statusCode) : Exception(message)
 {
-    public class AppException(string message, int statusCode) : Exception(message)
-    {
-        public int StatusCode { get; set; } = statusCode;
-    }
+    public int StatusCode { get; set; } = statusCode;
 }

@@ -72,10 +72,20 @@ builder.Services.AddAuthentication(options =>
 
 builder.Services.AddAuthorization();
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("DemoPolicy", policy =>
+    {
+        policy.AllowAnyOrigin()
+              .AllowAnyMethod()
+              .AllowAnyHeader();
+    });
+});
+
 var app = builder.Build();
 
-
 app.UseMiddleware<ExceptionMiddleware>();
+app.UseCors("DemoPolicy");
 
 app.UseHttpsRedirection();
 

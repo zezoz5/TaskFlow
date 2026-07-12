@@ -186,6 +186,16 @@ To authenticate in Swagger: call `/api/auth/login`, copy the token from the resp
 
 ---
 
+## Demo
+
+A visual demo page is included to explore the API without needing Swagger.
+
+1. Make sure the API is running
+2. Open `demo/index.html` in your browser
+3. Register or login, then explore workspaces, projects, tasks, and members live
+
+---
+
 ## What I Learned
 
 - Implementing **Clean Architecture** in a real project — keeping domain logic completely independent of HTTP and database concerns
@@ -195,3 +205,13 @@ To authenticate in Swagger: call `/api/auth/login`, copy the token from the resp
 - **Guard clause pattern** for cleaner, more readable authorization logic
 - **Pagination and filtering** using incremental LINQ query building
 - Real debugging skills — tracing 401 errors through middleware, claim inspection, package version conflicts
+
+---
+
+## Future Work
+
+- **Refresh Tokens** — short-lived access tokens with long-lived refresh tokens for production-ready authentication
+- **OAuth 2.0** — Google/GitHub login for verified emails and frictionless registration
+- **Unit Tests** — service layer testing with xUnit and Moq
+- **CI/CD** — automated build and deploy pipeline with GitHub Actions
+- **Deployment** — host the API on Azure with a cloud SQL Server instance

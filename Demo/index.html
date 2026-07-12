@@ -1,0 +1,961 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TaskFlow — Demo</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #22263a;
+    --border: #2e3348;
+    --accent: #6366f1;
+    --accent-dim: rgba(99,102,241,0.12);
+    --accent-hover: #818cf8;
+    --success: #22c55e;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+    --text: #e2e8f0;
+    --text-muted: #64748b;
+    --text-dim: #94a3b8;
+    --mono: 'JetBrains Mono', monospace;
+    --sans: 'Inter', sans-serif;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 14px;
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    grid-template-rows: 52px 1fr;
+  }
+
+  /* TOPBAR */
+  .topbar {
+    grid-column: 1 / -1;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    gap: 12px;
+  }
+  .logo {
+    font-weight: 600;
+    font-size: 15px;
+    letter-spacing: -0.3px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .logo-icon {
+    width: 26px; height: 26px;
+    background: var(--accent);
+    border-radius: 6px;
+    display: grid;
+    place-items: center;
+    font-size: 13px;
+  }
+  .topbar-right {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .user-badge {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 4px 12px;
+    font-size: 12px;
+    color: var(--text-dim);
+    display: none;
+  }
+  .user-badge.visible { display: block; }
+
+  /* SIDEBAR */
+  .sidebar {
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    padding: 16px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    overflow-y: auto;
+  }
+  .sidebar-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    padding: 8px 8px 4px;
+  }
+  .nav-item {
+    padding: 7px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    color: var(--text-dim);
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: background 0.15s, color 0.15s;
+    border: none;
+    background: none;
+    width: 100%;
+    text-align: left;
+  }
+  .nav-item:hover { background: var(--surface2); color: var(--text); }
+  .nav-item.active { background: var(--accent-dim); color: var(--accent-hover); }
+  .nav-item .dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--border);
+    flex-shrink: 0;
+  }
+  .nav-item.active .dot { background: var(--accent); }
+
+  /* MAIN */
+  .main {
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* PANELS */
+  .panel {
+    display: none;
+    flex-direction: column;
+    flex: 1;
+  }
+  .panel.active { display: flex; }
+
+  /* AUTH PANEL */
+  .auth-wrap {
+    flex: 1;
+    display: grid;
+    place-items: center;
+    padding: 40px 20px;
+  }
+  .auth-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 32px;
+    width: 100%;
+    max-width: 380px;
+  }
+  .auth-card h2 {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+  .auth-card p {
+    color: var(--text-muted);
+    font-size: 13px;
+    margin-bottom: 24px;
+  }
+  .tabs {
+    display: flex;
+    gap: 4px;
+    background: var(--surface2);
+    padding: 3px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+  }
+  .tab-btn {
+    flex: 1;
+    padding: 6px;
+    border-radius: 6px;
+    border: none;
+    background: none;
+    color: var(--text-muted);
+    font-size: 13px;
+    font-family: var(--sans);
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+  }
+  .tab-btn.active {
+    background: var(--surface);
+    color: var(--text);
+    font-weight: 500;
+  }
+
+  /* FORMS */
+  .field { margin-bottom: 14px; }
+  .field label {
+    display: block;
+    font-size: 12px;
+    color: var(--text-dim);
+    margin-bottom: 5px;
+    font-weight: 500;
+  }
+  .field input, .field select, .field textarea {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    padding: 8px 11px;
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .field input:focus, .field select:focus, .field textarea:focus {
+    border-color: var(--accent);
+  }
+  .field textarea { resize: vertical; min-height: 72px; }
+  .field select option { background: var(--surface2); }
+
+  .btn {
+    padding: 8px 16px;
+    border-radius: 7px;
+    border: none;
+    font-family: var(--sans);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: opacity 0.15s, transform 0.1s;
+  }
+  .btn:active { transform: scale(0.98); }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { opacity: 0.88; }
+  .btn-ghost {
+    background: var(--surface2);
+    color: var(--text-dim);
+    border: 1px solid var(--border);
+  }
+  .btn-ghost:hover { color: var(--text); border-color: var(--text-muted); }
+  .btn-danger { background: rgba(239,68,68,0.12); color: var(--danger); border: 1px solid rgba(239,68,68,0.2); }
+  .btn-full { width: 100%; }
+
+  /* PAGE HEADER */
+  .page-header {
+    padding: 24px 28px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .page-header h1 { font-size: 17px; font-weight: 600; }
+  .page-header p { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+
+  /* CONTENT */
+  .content { padding: 20px 28px; flex: 1; }
+
+  /* GRID */
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px; }
+
+  /* CARDS */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+    position: relative;
+  }
+  .card:hover { border-color: var(--accent); background: var(--surface2); }
+  .card h3 { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+  .card p { font-size: 12px; color: var(--text-muted); line-height: 1.5; }
+  .card-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 12px;
+  }
+  .badge {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 7px;
+    border-radius: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .badge-owner { background: rgba(99,102,241,0.15); color: var(--accent-hover); }
+  .badge-manager { background: rgba(245,158,11,0.15); color: var(--warning); }
+  .badge-member { background: rgba(100,116,139,0.15); color: var(--text-muted); }
+  .badge-active { background: rgba(34,197,94,0.12); color: var(--success); }
+  .badge-high { background: rgba(239,68,68,0.12); color: var(--danger); }
+  .badge-medium { background: rgba(245,158,11,0.12); color: var(--warning); }
+  .badge-low { background: rgba(34,197,94,0.12); color: var(--success); }
+  .badge-todo { background: rgba(100,116,139,0.12); color: var(--text-muted); }
+  .badge-inprogress { background: rgba(99,102,241,0.12); color: var(--accent-hover); }
+  .badge-completed { background: rgba(34,197,94,0.12); color: var(--success); }
+
+  /* ADD CARD */
+  .add-card {
+    background: transparent;
+    border: 1px dashed var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    color: var(--text-muted);
+    font-size: 13px;
+    transition: border-color 0.15s, color 0.15s;
+    min-height: 80px;
+  }
+  .add-card:hover { border-color: var(--accent); color: var(--accent-hover); }
+
+  /* TABLE */
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; }
+  th {
+    text-align: left;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+  }
+  td {
+    padding: 11px 14px;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+    color: var(--text-dim);
+  }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--surface2); }
+
+  /* TOAST */
+  .toast-wrap {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    z-index: 100;
+  }
+  .toast {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 16px;
+    font-size: 13px;
+    animation: slideIn 0.2s ease;
+    max-width: 280px;
+  }
+  .toast.success { border-color: rgba(34,197,94,0.3); color: var(--success); }
+  .toast.error { border-color: rgba(239,68,68,0.3); color: var(--danger); }
+  @keyframes slideIn { from { transform: translateX(20px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+  /* MODAL */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    z-index: 50;
+    place-items: center;
+  }
+  .modal-overlay.open { display: grid; }
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 28px;
+    width: 100%;
+    max-width: 420px;
+    animation: fadeUp 0.2s ease;
+  }
+  .modal h3 { font-size: 15px; font-weight: 600; margin-bottom: 20px; }
+  .modal-footer { display: flex; gap: 8px; justify-content: flex-end; margin-top: 20px; }
+  @keyframes fadeUp { from { transform: translateY(12px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+  /* EMPTY STATE */
+  .empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 60px 20px;
+    color: var(--text-muted);
+    text-align: center;
+  }
+  .empty .icon { font-size: 32px; margin-bottom: 4px; }
+  .empty p { font-size: 13px; }
+
+  /* RESPONSE VIEWER */
+  .response-box {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 14px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-dim);
+    white-space: pre-wrap;
+    max-height: 200px;
+    overflow-y: auto;
+    margin-top: 14px;
+  }
+
+  .divider { height: 1px; background: var(--border); margin: 8px 0; }
+
+  .loading { opacity: 0.5; pointer-events: none; }
+
+  .back-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--text-muted);
+    font-size: 12px;
+    cursor: pointer;
+    background: none;
+    border: none;
+    font-family: var(--sans);
+    padding: 0;
+    margin-bottom: 16px;
+  }
+  .back-btn:hover { color: var(--text); }
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<header class="topbar">
+  <div class="logo">
+    <div class="logo-icon">⚡</div>
+    TaskFlow
+  </div>
+  <span class="user-badge" id="userBadge"></span>
+  <div class="topbar-right">
+    <button class="btn btn-ghost" id="logoutBtn" style="display:none" onclick="logout()">Sign out</button>
+  </div>
+</header>
+
+<!-- SIDEBAR -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-label">Navigation</div>
+  <button class="nav-item active" onclick="showPanel('workspaces')" id="nav-workspaces">
+    <span class="dot"></span> Workspaces
+  </button>
+  <button class="nav-item" onclick="showPanel('projects')" id="nav-projects" style="display:none">
+    <span class="dot"></span> Projects
+  </button>
+  <button class="nav-item" onclick="showPanel('tasks')" id="nav-tasks" style="display:none">
+    <span class="dot"></span> Tasks
+  </button>
+  <button class="nav-item" onclick="showPanel('members')" id="nav-members" style="display:none">
+    <span class="dot"></span> Members
+  </button>
+  <div class="divider" style="margin-top:auto"></div>
+  <div class="sidebar-label">API</div>
+  <button class="nav-item" onclick="showPanel('auth')" id="nav-auth">
+    <span class="dot"></span> Auth
+  </button>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+
+  <!-- AUTH PANEL -->
+  <div class="panel active" id="panel-auth">
+    <div class="auth-wrap">
+      <div class="auth-card">
+        <h2>TaskFlow API</h2>
+        <p>Connect to your local API to explore the demo</p>
+        <div class="tabs">
+          <button class="tab-btn active" onclick="switchTab('login')">Login</button>
+          <button class="tab-btn" onclick="switchTab('register')">Register</button>
+        </div>
+
+        <div id="tab-login">
+          <div class="field">
+            <label>Email</label>
+            <input type="email" id="loginEmail" placeholder="you@example.com">
+          </div>
+          <div class="field">
+            <label>Password</label>
+            <input type="password" id="loginPassword" placeholder="••••••••">
+          </div>
+          <button class="btn btn-primary btn-full" onclick="login()">Sign in</button>
+        </div>
+
+        <div id="tab-register" style="display:none">
+          <div class="field">
+            <label>Full Name</label>
+            <input type="text" id="regName" placeholder="Ziad Khaled">
+          </div>
+          <div class="field">
+            <label>Email</label>
+            <input type="email" id="regEmail" placeholder="you@example.com">
+          </div>
+          <div class="field">
+            <label>Password</label>
+            <input type="password" id="regPassword" placeholder="••••••••">
+          </div>
+          <button class="btn btn-primary btn-full" onclick="register()">Create account</button>
+        </div>
+
+        <div class="response-box" id="authResponse" style="display:none"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- WORKSPACES PANEL -->
+  <div class="panel" id="panel-workspaces">
+    <div class="page-header">
+      <div>
+        <h1>Workspaces</h1>
+        <p>All workspaces you belong to</p>
+      </div>
+      <button class="btn btn-primary" onclick="openModal('createWorkspace')">+ New Workspace</button>
+    </div>
+    <div class="content">
+      <div class="grid" id="workspacesGrid">
+        <div class="empty"><div class="icon">🏢</div><p>Loading workspaces...</p></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PROJECTS PANEL -->
+  <div class="panel" id="panel-projects">
+    <div class="page-header">
+      <div>
+        <button class="back-btn" onclick="showPanel('workspaces')">← Back to Workspaces</button>
+        <h1 id="projectsTitle">Projects</h1>
+        <p id="projectsSubtitle">Projects in this workspace</p>
+      </div>
+      <button class="btn btn-primary" onclick="openModal('createProject')">+ New Project</button>
+    </div>
+    <div class="content">
+      <div class="grid" id="projectsGrid">
+        <div class="empty"><div class="icon">📁</div><p>No projects yet</p></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TASKS PANEL -->
+  <div class="panel" id="panel-tasks">
+    <div class="page-header">
+      <div>
+        <button class="back-btn" onclick="showPanel('projects')">← Back to Projects</button>
+        <h1 id="tasksTitle">Tasks</h1>
+        <p id="tasksSubtitle">Tasks in this project</p>
+      </div>
+      <button class="btn btn-primary" onclick="openModal('createTask')">+ New Task</button>
+    </div>
+    <div class="content">
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Title</th>
+              <th>Status</th>
+              <th>Priority</th>
+              <th>Deadline</th>
+              <th>Assigned To</th>
+            </tr>
+          </thead>
+          <tbody id="tasksBody">
+            <tr><td colspan="5"><div class="empty"><p>No tasks yet</p></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- MEMBERS PANEL -->
+  <div class="panel" id="panel-members">
+    <div class="page-header">
+      <div>
+        <button class="back-btn" onclick="showPanel('workspaces')">← Back to Workspaces</button>
+        <h1>Members</h1>
+        <p id="membersSubtitle">Workspace members</p>
+      </div>
+      <button class="btn btn-primary" onclick="openModal('inviteMember')">+ Invite Member</button>
+    </div>
+    <div class="content">
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Name</th><th>Email</th><th>Role</th><th>Joined</th></tr>
+          </thead>
+          <tbody id="membersBody">
+            <tr><td colspan="4"><div class="empty"><p>No members</p></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<!-- MODALS -->
+<div class="modal-overlay" id="modal-createWorkspace">
+  <div class="modal">
+    <h3>Create Workspace</h3>
+    <div class="field"><label>Name</label><input type="text" id="wsName" placeholder="My Team"></div>
+    <div class="field"><label>Description</label><textarea id="wsDesc" placeholder="What is this workspace for?"></textarea></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('createWorkspace')">Cancel</button>
+      <button class="btn btn-primary" onclick="createWorkspace()">Create</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-createProject">
+  <div class="modal">
+    <h3>Create Project</h3>
+    <div class="field"><label>Name</label><input type="text" id="projName" placeholder="Project name"></div>
+    <div class="field"><label>Description</label><textarea id="projDesc" placeholder="What are you building?"></textarea></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('createProject')">Cancel</button>
+      <button class="btn btn-primary" onclick="createProject()">Create</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-createTask">
+  <div class="modal">
+    <h3>Create Task</h3>
+    <div class="field"><label>Title</label><input type="text" id="taskTitle" placeholder="Task title"></div>
+    <div class="field"><label>Description</label><textarea id="taskDesc" placeholder="What needs to be done?"></textarea></div>
+    <div class="field">
+      <label>Priority</label>
+      <select id="taskPriority">
+        <option value="0">Low</option>
+        <option value="1" selected>Medium</option>
+        <option value="2">High</option>
+      </select>
+    </div>
+    <div class="field"><label>Deadline</label><input type="date" id="taskDeadline"></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('createTask')">Cancel</button>
+      <button class="btn btn-primary" onclick="createTask()">Create</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-inviteMember">
+  <div class="modal">
+    <h3>Invite Member</h3>
+    <div class="field"><label>Email</label><input type="email" id="inviteEmail" placeholder="colleague@example.com"></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('inviteMember')">Cancel</button>
+      <button class="btn btn-primary" onclick="inviteMember()">Send Invite</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOASTS -->
+<div class="toast-wrap" id="toastWrap"></div>
+
+<script>
+  const API = 'https://localhost:7173/api';
+  let token = null;
+  let currentWorkspace = null;
+  let currentProject = null;
+
+  // ─── AUTH ───────────────────────────────────────────
+  function switchTab(tab) {
+    document.querySelectorAll('.tab-btn').forEach((b,i) => b.classList.toggle('active', (i===0&&tab==='login')||(i===1&&tab==='register')));
+    document.getElementById('tab-login').style.display = tab === 'login' ? '' : 'none';
+    document.getElementById('tab-register').style.display = tab === 'register' ? '' : 'none';
+  }
+
+  async function login() {
+    const email = document.getElementById('loginEmail').value;
+    const password = document.getElementById('loginPassword').value;
+    try {
+      const res = await fetch(`${API}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Login failed');
+      token = data.token;
+      onLoggedIn(data.fullName || email);
+    } catch(e) {
+      showResponse('authResponse', e.message);
+      toast(e.message, 'error');
+    }
+  }
+
+  async function register() {
+    const fullName = document.getElementById('regName').value;
+    const email = document.getElementById('regEmail').value;
+    const password = document.getElementById('regPassword').value;
+    try {
+      const res = await fetch(`${API}/auth/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fullName, email, password })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Registration failed');
+      token = data.token;
+      onLoggedIn(data.fullName || email);
+    } catch(e) {
+      showResponse('authResponse', e.message);
+      toast(e.message, 'error');
+    }
+  }
+
+  function onLoggedIn(name) {
+    document.getElementById('userBadge').textContent = name;
+    document.getElementById('userBadge').classList.add('visible');
+    document.getElementById('logoutBtn').style.display = '';
+    document.getElementById('nav-workspaces').style.display = '';
+    showPanel('workspaces');
+    loadWorkspaces();
+    toast(`Welcome, ${name}!`, 'success');
+  }
+
+  function logout() {
+    token = null; currentWorkspace = null; currentProject = null;
+    document.getElementById('userBadge').classList.remove('visible');
+    document.getElementById('logoutBtn').style.display = 'none';
+    ['projects','tasks','members'].forEach(n => {
+      document.getElementById(`nav-${n}`).style.display = 'none';
+    });
+    showPanel('auth');
+  }
+
+  // ─── WORKSPACES ──────────────────────────────────────
+  async function loadWorkspaces() {
+    try {
+      const res = await apiFetch('/workspace');
+      const data = await res.json();
+      const grid = document.getElementById('workspacesGrid');
+      if (!data.length) {
+        grid.innerHTML = `<div class="empty"><div class="icon">🏢</div><p>No workspaces yet. Create one to get started.</p></div>`;
+        return;
+      }
+      grid.innerHTML = data.map(ws => `
+        <div class="card" onclick="openWorkspace('${ws.id}', '${esc(ws.name)}')">
+          <h3>${esc(ws.name)}</h3>
+          <p>${esc(ws.description || 'No description')}</p>
+          <div class="card-meta">
+            <span class="badge badge-active">Active</span>
+          </div>
+        </div>
+      `).join('') + `<div class="add-card" onclick="openModal('createWorkspace')">+ New Workspace</div>`;
+    } catch(e) { toast(e.message, 'error'); }
+  }
+
+  async function createWorkspace() {
+    const name = document.getElementById('wsName').value;
+    const description = document.getElementById('wsDesc').value;
+    try {
+      const res = await apiFetch('/workspace', 'POST', { name, description });
+      if (!res.ok) { const d = await res.json(); throw new Error(d.message); }
+      closeModal('createWorkspace');
+      document.getElementById('wsName').value = '';
+      document.getElementById('wsDesc').value = '';
+      toast('Workspace created', 'success');
+      loadWorkspaces();
+    } catch(e) { toast(e.message, 'error'); }
+  }
+
+  function openWorkspace(id, name) {
+    currentWorkspace = id;
+    document.getElementById('projectsTitle').textContent = name;
+    document.getElementById('projectsSubtitle').textContent = 'Projects in ' + name;
+    document.getElementById('membersSubtitle').textContent = 'Members of ' + name;
+    document.getElementById('nav-projects').style.display = '';
+    document.getElementById('nav-members').style.display = '';
+    setNavActive('nav-projects');
+    showPanel('projects');
+    loadProjects();
+  }
+
+  // ─── PROJECTS ────────────────────────────────────────
+  async function loadProjects() {
+    try {
+      const res = await apiFetch(`/workspace/${currentWorkspace}/projects`);
+      const data = await res.json();
+      const grid = document.getElementById('projectsGrid');
+      if (!data.length) {
+        grid.innerHTML = `<div class="empty"><div class="icon">📁</div><p>No projects yet.</p></div>`;
+        return;
+      }
+      grid.innerHTML = data.map(p => `
+        <div class="card" onclick="openProject('${p.id}', '${esc(p.name)}')">
+          <h3>${esc(p.name)}</h3>
+          <p>${esc(p.description || 'No description')}</p>
+          <div class="card-meta">
+            <span class="badge badge-active">${statusLabel(p.status)}</span>
+          </div>
+        </div>
+      `).join('') + `<div class="add-card" onclick="openModal('createProject')">+ New Project</div>`;
+    } catch(e) { toast(e.message, 'error'); }
+  }
+
+  async function createProject() {
+    const name = document.getElementById('projName').value;
+    const description = document.getElementById('projDesc').value;
+    try {
+      const res = await apiFetch(`/workspace/${currentWorkspace}/projects`, 'POST', { name, description });
+      if (!res.ok) { const d = await res.json(); throw new Error(d.message); }
+      closeModal('createProject');
+      document.getElementById('projName').value = '';
+      document.getElementById('projDesc').value = '';
+      toast('Project created', 'success');
+      loadProjects();
+    } catch(e) { toast(e.message, 'error'); }
+  }
+
+  function openProject(id, name) {
+    currentProject = id;
+    document.getElementById('tasksTitle').textContent = name;
+    document.getElementById('tasksSubtitle').textContent = 'Tasks in ' + name;
+    document.getElementById('nav-tasks').style.display = '';
+    setNavActive('nav-tasks');
+    showPanel('tasks');
+    loadTasks();
+  }
+
+  // ─── TASKS ───────────────────────────────────────────
+  async function loadTasks() {
+    try {
+      const res = await apiFetch(`/workspace/${currentWorkspace}/projects/${currentProject}/tasks`);
+      const data = await res.json();
+      const items = data.items || data;
+      const tbody = document.getElementById('tasksBody');
+      if (!items.length) {
+        tbody.innerHTML = `<tr><td colspan="5"><div class="empty"><p>No tasks yet.</p></div></td></tr>`;
+        return;
+      }
+      tbody.innerHTML = items.map(t => `
+        <tr>
+          <td><strong>${esc(t.title)}</strong>${t.description ? `<br><span style="color:var(--text-muted);font-size:11px">${esc(t.description)}</span>` : ''}</td>
+          <td><span class="badge badge-${statusClass(t.status)}">${statusLabel(t.status)}</span></td>
+          <td><span class="badge badge-${priorityClass(t.priority)}">${priorityLabel(t.priority)}</span></td>
+          <td style="color:var(--text-muted)">${t.deadline ? new Date(t.deadline).toLocaleDateString() : '—'}</td>
+          <td style="color:var(--text-muted)">${t.assignedToId ? t.assignedToId.slice(0,8)+'…' : '—'}</td>
+        </tr>
+      `).join('');
+    } catch(e) { toast(e.message, 'error'); }
+  }
+
+  async function createTask() {
+    const title = document.getElementById('taskTitle').value;
+    const description = document.getElementById('taskDesc').value;
+    const priority = parseInt(document.getElementById('taskPriority').value);
+    const deadline = document.getElementById('taskDeadline').value || null;
+    try {
+      const res = await apiFetch(`/workspace/${currentWorkspace}/projects/${currentProject}/tasks`, 'POST', { title, description, priority, deadline });
+      if (!res.ok) { const d = await res.json(); throw new Error(d.message); }
+      closeModal('createTask');
+      document.getElementById('taskTitle').value = '';
+      document.getElementById('taskDesc').value = '';
+      document.getElementById('taskDeadline').value = '';
+      toast('Task created', 'success');
+      loadTasks();
+    } catch(e) { toast(e.message, 'error'); }
+  }
+
+  // ─── MEMBERS ─────────────────────────────────────────
+  async function loadMembers() {
+    try {
+      const res = await apiFetch(`/workspace/${currentWorkspace}/members`);
+      const data = await res.json();
+      const tbody = document.getElementById('membersBody');
+      if (!data.length) {
+        tbody.innerHTML = `<tr><td colspan="4"><div class="empty"><p>No members</p></div></td></tr>`;
+        return;
+      }
+      tbody.innerHTML = data.map(m => `
+        <tr>
+          <td>${esc(m.fullName)}</td>
+          <td style="color:var(--text-muted)">${esc(m.email)}</td>
+          <td><span class="badge badge-${m.role.toString().toLowerCase()}">${roleLabel(m.role)}</span></td>
+          <td style="color:var(--text-muted)">${new Date(m.joinedAt).toLocaleDateString()}</td>
+        </tr>
+      `).join('');
+    } catch(e) { toast(e.message, 'error'); }
+  }
+
+  async function inviteMember() {
+    const email = document.getElementById('inviteEmail').value;
+    try {
+      const res = await apiFetch(`/workspace/${currentWorkspace}/members`, 'POST', { email });
+      if (!res.ok) { const d = await res.json(); throw new Error(d.message); }
+      closeModal('inviteMember');
+      document.getElementById('inviteEmail').value = '';
+      toast('Member invited', 'success');
+      loadMembers();
+    } catch(e) { toast(e.message, 'error'); }
+  }
+
+  // ─── PANEL NAV ───────────────────────────────────────
+  function showPanel(name) {
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    document.getElementById('panel-' + name).classList.add('active');
+    setNavActive('nav-' + name);
+    if (name === 'members') loadMembers();
+  }
+
+  function setNavActive(id) {
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    const el = document.getElementById(id);
+    if (el) el.classList.add('active');
+  }
+
+  // ─── MODAL ───────────────────────────────────────────
+  function openModal(id) { document.getElementById('modal-' + id).classList.add('open'); }
+  function closeModal(id) { document.getElementById('modal-' + id).classList.remove('open'); }
+  document.querySelectorAll('.modal-overlay').forEach(o => {
+    o.addEventListener('click', e => { if (e.target === o) o.classList.remove('open'); });
+  });
+
+  // ─── UTILS ───────────────────────────────────────────
+  async function apiFetch(path, method = 'GET', body = null) {
+    const opts = {
+      method,
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }
+    };
+    if (body) opts.body = JSON.stringify(body);
+    return fetch(API + path, opts);
+  }
+
+  function toast(msg, type = 'success') {
+    const wrap = document.getElementById('toastWrap');
+    const el = document.createElement('div');
+    el.className = `toast ${type}`;
+    el.textContent = msg;
+    wrap.appendChild(el);
+    setTimeout(() => el.remove(), 3500);
+  }
+
+  function showResponse(id, data) {
+    const el = document.getElementById(id);
+    el.style.display = '';
+    el.textContent = typeof data === 'string' ? data : JSON.stringify(data, null, 2);
+  }
+
+  function esc(str) {
+    return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function statusLabel(s) { return ['Active','Completed','Archived','Todo','In Progress','Done'][s] || s; }
+  function statusClass(s) { return ['todo','inprogress','completed'][s] || 'todo'; }
+  function priorityLabel(p) { return ['Low','Medium','High'][p] || p; }
+  function priorityClass(p) { return ['low','medium','high'][p] || 'low'; }
+  function roleLabel(r) { return ['Owner','Manager','Member'][r] || r; }
+</script>
+</body>
+</html>

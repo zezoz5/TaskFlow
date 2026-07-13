@@ -641,6 +641,12 @@
       </select>
     </div>
     <div class="field"><label>Deadline</label><input type="date" id="taskDeadline"></div>
+    <div class="field">
+      <label>Assign To <span style="color:var(--text-muted)">(optional)</span></label>
+      <select id="taskAssignee">
+        <option value="">Unassigned</option>
+      </select>
+    </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal('createTask')">Cancel</button>
       <button class="btn btn-primary" onclick="createTask()">Create</button>
@@ -667,6 +673,7 @@
   let token = null;
   let currentWorkspace = null;
   let currentProject = null;
+  let membersCache = {};
 
   // ─── AUTH ───────────────────────────────────────────
   function switchTab(tab) {
@@ -831,6 +838,14 @@
   // ─── TASKS ───────────────────────────────────────────
   async function loadTasks() {
     try {
+      // refresh members cache so we can show names instead of GUIDs
+      try {
+        const mRes = await apiFetch(`/workspace/${currentWorkspace}/members`);
+        const members = await mRes.json();
+        membersCache = {};
+        members.forEach(m => { membersCache[m.userId] = m.fullName; });
+      } catch(e) { /* non-fatal */ }
+
       const res = await apiFetch(`/workspace/${currentWorkspace}/projects/${currentProject}/tasks`);
       const data = await res.json();
       const items = data.items || data;
@@ -845,7 +860,7 @@
           <td><span class="badge badge-${statusClass(t.status)}">${statusLabel(t.status)}</span></td>
           <td><span class="badge badge-${priorityClass(t.priority)}">${priorityLabel(t.priority)}</span></td>
           <td style="color:var(--text-muted)">${t.deadline ? new Date(t.deadline).toLocaleDateString() : '—'}</td>
-          <td style="color:var(--text-muted)">${t.assignedToId ? t.assignedToId.slice(0,8)+'…' : '—'}</td>
+          <td style="color:var(--text-muted)">${t.assignedToId ? (membersCache[t.assignedToId] || t.assignedToId.slice(0,8)+'…') : '—'}</td>
         </tr>
       `).join('');
     } catch(e) { toast(e.message, 'error'); }
@@ -856,13 +871,15 @@
     const description = document.getElementById('taskDesc').value;
     const priority = parseInt(document.getElementById('taskPriority').value);
     const deadline = document.getElementById('taskDeadline').value || null;
+    const assignedToId = document.getElementById('taskAssignee').value || null;
     try {
-      const res = await apiFetch(`/workspace/${currentWorkspace}/projects/${currentProject}/tasks`, 'POST', { title, description, priority, deadline });
+      const res = await apiFetch(`/workspace/${currentWorkspace}/projects/${currentProject}/tasks`, 'POST', { title, description, priority, deadline, assignedToId });
       if (!res.ok) { const d = await res.json(); throw new Error(d.message); }
       closeModal('createTask');
       document.getElementById('taskTitle').value = '';
       document.getElementById('taskDesc').value = '';
       document.getElementById('taskDeadline').value = '';
+      document.getElementById('taskAssignee').value = '';
       toast('Task created', 'success');
       loadTasks();
     } catch(e) { toast(e.message, 'error'); }
@@ -916,11 +933,29 @@
   }
 
   // ─── MODAL ───────────────────────────────────────────
-  function openModal(id) { document.getElementById('modal-' + id).classList.add('open'); }
+  async function openModal(id) {
+    document.getElementById('modal-' + id).classList.add('open');
+    if (id === 'createTask') await populateAssigneeDropdown();
+  }
   function closeModal(id) { document.getElementById('modal-' + id).classList.remove('open'); }
   document.querySelectorAll('.modal-overlay').forEach(o => {
     o.addEventListener('click', e => { if (e.target === o) o.classList.remove('open'); });
   });
+
+  async function populateAssigneeDropdown() {
+    const select = document.getElementById('taskAssignee');
+    select.innerHTML = '<option value="">Unassigned</option>';
+    try {
+      const res = await apiFetch(`/workspace/${currentWorkspace}/members`);
+      const members = await res.json();
+      members.forEach(m => {
+        const opt = document.createElement('option');
+        opt.value = m.userId;
+        opt.textContent = `${m.fullName} (${roleLabel(m.role)})`;
+        select.appendChild(opt);
+      });
+    } catch(e) { /* silently fail — assignee is optional */ }
+  }
 
   // ─── UTILS ───────────────────────────────────────────
   async function apiFetch(path, method = 'GET', body = null) {

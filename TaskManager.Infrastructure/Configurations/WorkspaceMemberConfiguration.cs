@@ -13,7 +13,7 @@ public class WorkspaceMemberConfiguration : IEntityTypeConfiguration<WorkspaceMe
         builder.Property(x => x.Role)
             .HasConversion<string>()
             .IsRequired()
-            .HasMaxLength(7);
+            .HasMaxLength(10);
 
         builder.HasOne(x => x.AppUser)
             .WithMany(x => x.WorkspaceMembers)

@@ -212,6 +212,16 @@ A visual demo page is included to explore the API without needing Swagger.
 
 - **Refresh Tokens** — short-lived access tokens with long-lived refresh tokens for production-ready authentication
 - **OAuth 2.0** — Google/GitHub login for verified emails and frictionless registration
-- **Unit Tests** — service layer testing with xUnit and Moq
+- **Comprehensive Unit & Integration Testing** — service layer testing with xUnit and Moq
 - **CI/CD** — automated build and deploy pipeline with GitHub Actions
 - **Deployment** — host the API on Azure with a cloud SQL Server instance
+
+---
+
+## A Note from the Developer
+
+TaskFlow was built as a learning project with one goal in mind: to move beyond CRUD APIs and understand how maintainable backend applications are designed.
+
+Every project I build focuses on learning something new, and TaskFlow represents my journey into Clean Architecture, role-based authorization, and multi-tenant application design.
+
+There are still many improvements I'd like to make, but I'm proud of how much this project taught me.

@@ -31,7 +31,7 @@ public class WorkspaceMemberController(IWorkspaceMemberService service) : Contro
         var userId = User.FindFirstValue(JwtRegisteredClaimNames.Sub);
         if (userId == null) return Unauthorized();
 
-        var invitedMember = await _service.InviteAsync(userId, workspaceId, dto);
+        var invitedMember = await _service.InviteMemberAsync(userId, workspaceId, dto);
 
         return Ok(invitedMember);
     }
@@ -42,7 +42,7 @@ public class WorkspaceMemberController(IWorkspaceMemberService service) : Contro
         var userId = User.FindFirstValue(JwtRegisteredClaimNames.Sub);
         if (userId == null) return Unauthorized();
 
-        var PromotedMember = await _service.PromoteAsync(userId, workspaceId, targetUserId);
+        var PromotedMember = await _service.PromoteMemberAsync(userId, workspaceId, targetUserId);
 
         return Ok(PromotedMember);
     }
@@ -53,7 +53,7 @@ public class WorkspaceMemberController(IWorkspaceMemberService service) : Contro
         var userId = User.FindFirstValue(JwtRegisteredClaimNames.Sub);
         if (userId == null) return Unauthorized();
 
-        await _service.RemoveAsync(userId, workspaceId, targetUserId);
+        await _service.RemoveMemberAsync(userId, workspaceId, targetUserId);
 
         return NoContent();
     }

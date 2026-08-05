@@ -495,7 +495,7 @@
         <div id="tab-register" style="display:none">
           <div class="field">
             <label>Full Name</label>
-            <input type="text" id="regName" placeholder="Ziad Khaled">
+            <input type="text" id="regName" placeholder="Full Name">
           </div>
           <div class="field">
             <label>Email</label>
@@ -566,10 +566,11 @@
               <th>Priority</th>
               <th>Deadline</th>
               <th>Assigned To</th>
+              <th>Actions</th>
             </tr>
           </thead>
           <tbody id="tasksBody">
-            <tr><td colspan="5"><div class="empty"><p>No tasks yet</p></div></td></tr>
+            <tr><td colspan="6"><div class="empty"><p>No tasks yet</p></div></td></tr>
           </tbody>
         </table>
       </div>
@@ -804,7 +805,7 @@
           <h3>${esc(p.name)}</h3>
           <p>${esc(p.description || 'No description')}</p>
           <div class="card-meta">
-            <span class="badge badge-active">${statusLabel(p.status)}</span>
+            <span class="badge badge-active">${projectStatusLabel(p.status)}</span>
           </div>
         </div>
       `).join('') + `<div class="add-card" onclick="openModal('createProject')">+ New Project</div>`;
@@ -851,16 +852,30 @@
       const items = data.items || data;
       const tbody = document.getElementById('tasksBody');
       if (!items.length) {
-        tbody.innerHTML = `<tr><td colspan="5"><div class="empty"><p>No tasks yet.</p></div></td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="6"><div class="empty"><p>No tasks yet.</p></div></td></tr>`;
         return;
       }
       tbody.innerHTML = items.map(t => `
         <tr>
           <td><strong>${esc(t.title)}</strong>${t.description ? `<br><span style="color:var(--text-muted);font-size:11px">${esc(t.description)}</span>` : ''}</td>
-          <td><span class="badge badge-${statusClass(t.status)}">${statusLabel(t.status)}</span></td>
+          <td><span class="badge badge-${taskStatusClass(t.status)}">${taskStatusClass(t.status)}</span></td>
           <td><span class="badge badge-${priorityClass(t.priority)}">${priorityLabel(t.priority)}</span></td>
           <td style="color:var(--text-muted)">${t.deadline ? new Date(t.deadline).toLocaleDateString() : '—'}</td>
           <td style="color:var(--text-muted)">${t.assignedToId ? (membersCache[t.assignedToId] || t.assignedToId.slice(0,8)+'…') : '—'}</td>
+          <td>
+            <div style="display:flex;align-items:center;gap:8px">
+              <select onchange="updateTaskStatus('${t.id}', this.value, this)"
+                style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:4px 8px;color:var(--text-dim);font-size:12px;font-family:var(--sans);cursor:pointer;outline:none;">
+                <option value="0" ${t.status===0?'selected':''}>Todo</option>
+                <option value="1" ${t.status===1?'selected':''}>In Progress</option>
+                <option value="2" ${t.status===2?'selected':''}>Completed</option>
+              </select>
+              <button onclick="deleteTask('${t.id}')"
+                style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.2);color:var(--danger);border-radius:6px;padding:4px 10px;font-size:12px;font-family:var(--sans);cursor:pointer;">
+                Delete
+              </button>
+            </div>
+          </td>
         </tr>
       `).join('');
     } catch(e) { toast(e.message, 'error'); }
@@ -881,6 +896,34 @@
       document.getElementById('taskDeadline').value = '';
       document.getElementById('taskAssignee').value = '';
       toast('Task created', 'success');
+      loadTasks();
+    } catch(e) { toast(e.message, 'error'); }
+  }
+
+  async function updateTaskStatus(taskId, status, selectEl) {
+    try {
+      const res = await apiFetch(
+        `/workspace/${currentWorkspace}/projects/${currentProject}/tasks/${taskId}/status`,
+        'PUT',
+        { status: parseInt(status) }
+      );
+      if (!res.ok) { const d = await res.json(); throw new Error(d.message); }
+      toast('Status updated', 'success');
+      loadTasks(); // reload to refresh the badge
+    } catch(e) {
+      toast(e.message, 'error');
+    }
+  }
+
+  async function deleteTask(taskId) {
+    if (!confirm('Delete this task?')) return;
+    try {
+      const res = await apiFetch(
+        `/workspace/${currentWorkspace}/projects/${currentProject}/tasks/${taskId}`,
+        'DELETE'
+      );
+      if (!res.ok) { const d = await res.json(); throw new Error(d.message); }
+      toast('Task deleted', 'success');
       loadTasks();
     } catch(e) { toast(e.message, 'error'); }
   }
@@ -986,8 +1029,9 @@
     return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   }
 
-  function statusLabel(s) { return ['Active','Completed','Archived','Todo','In Progress','Done'][s] || s; }
-  function statusClass(s) { return ['todo','inprogress','completed'][s] || 'todo'; }
+  function projectStatusLabel(s) { return ['Active','Archived'][s] || s; }
+  function taskStatusLabel(s) { return ['Todo','In Progress','Completed'][s] || s; }
+  function taskStatusClass(s) { return ['todo','inprogress','completed'][s] || 'todo'; }
   function priorityLabel(p) { return ['Low','Medium','High'][p] || p; }
   function priorityClass(p) { return ['low','medium','high'][p] || 'low'; }
   function roleLabel(r) { return ['Owner','Manager','Member'][r] || r; }

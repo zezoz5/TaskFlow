@@ -12,7 +12,7 @@ public class WorkspaceService(AppDbContext context) : IWorkspaceService
 {
     private readonly AppDbContext _context = context;
 
-    public async Task<IEnumerable<WorkspaceDto>> GetAll(string userId)
+    public async Task<IEnumerable<WorkspaceDto>> GetAllWorkspacesAsync(string userId)
     {
         return await _context.WorkspaceMembers
              .Where(u => u.UserId == userId)
@@ -27,7 +27,7 @@ public class WorkspaceService(AppDbContext context) : IWorkspaceService
              .ToListAsync();
     }
 
-    public async Task<WorkspaceDto> GetById(Guid workspaceId, string userId)
+    public async Task<WorkspaceDto> GetWorkspaceByIdAsync(Guid workspaceId, string userId)
     {
         var workspace = await _context.WorkspaceMembers.Include(i => i.Workspace)
             .FirstOrDefaultAsync(u => u.UserId == userId && u.WorkspaceId == workspaceId);
@@ -48,7 +48,7 @@ public class WorkspaceService(AppDbContext context) : IWorkspaceService
 
     }
 
-    public async Task<WorkspaceDto> CreateWorkspace(CreateWorkspaceDto dto, string userId)
+    public async Task<WorkspaceDto> CreateWorkspaceAsync(CreateWorkspaceDto dto, string userId)
     {
         var workspace = new Workspace
         {
@@ -78,7 +78,7 @@ public class WorkspaceService(AppDbContext context) : IWorkspaceService
         };
     }
 
-    public async Task<WorkspaceDto> UpdateWorkspace(Guid workspaceId, UpdateWorkspaceDto dto, string userId)
+    public async Task<WorkspaceDto> UpdateWorkspaceAsync(Guid workspaceId, UpdateWorkspaceDto dto, string userId)
     {
         var member = await _context.WorkspaceMembers
         .Include(w => w.Workspace)
@@ -103,7 +103,7 @@ public class WorkspaceService(AppDbContext context) : IWorkspaceService
         };
     }
 
-    public async Task DeleteWorkspace(Guid workspaceId, string userId)
+    public async Task RemoveWorkspaceAsync(Guid workspaceId, string userId)
     {
         var workspace = await _context.Workspaces.FirstOrDefaultAsync(w => w.Id == workspaceId && w.OwnerId == userId);
 

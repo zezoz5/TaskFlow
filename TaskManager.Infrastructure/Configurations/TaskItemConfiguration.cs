@@ -11,7 +11,7 @@ public class TaskItemConfiguration : IEntityTypeConfiguration<TaskItem>
         builder.HasKey(x => x.Id);
 
         builder.Property(x => x.Title)
-            .HasMaxLength(20)
+            .HasMaxLength(100)
             .IsRequired();
 
         builder.Property(x => x.Description)

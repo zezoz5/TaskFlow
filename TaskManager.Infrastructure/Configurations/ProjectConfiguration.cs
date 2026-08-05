@@ -11,7 +11,7 @@ public class ProjectConfiguration : IEntityTypeConfiguration<Project>
         builder.HasKey(x => x.Id);
 
         builder.Property(x => x.Name)
-            .HasMaxLength(20)
+            .HasMaxLength(100)
             .IsRequired();
 
         builder.Property(x => x.Description)

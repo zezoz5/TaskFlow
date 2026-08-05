@@ -6,7 +6,7 @@ namespace TaskManager.Core.DTOs.Task;
 public class CreateTaskItemDto
 {
     [Required]
-    [MaxLength(100)]
+    [MaxLength(200)]
     public string Title { get; set; } = null!;
     public string? Description { get; set; }
     public TaskItemPriority Priority { get; set; }

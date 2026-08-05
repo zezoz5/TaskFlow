@@ -34,7 +34,7 @@ public class WorkspaceMemberService(AppDbContext context, UserManager<AppUser> u
         throw new AppException("You are not a member of this workspace", 403);
     }
 
-    public async Task<WorkspaceMemberDto> InviteAsync(string userId, Guid workspaceId, AddWorkspaceMemberDto dto)
+    public async Task<WorkspaceMemberDto> InviteMemberAsync(string userId, Guid workspaceId, AddWorkspaceMemberDto dto)
     {
         var requester = await _context.WorkspaceMembers
             .FirstOrDefaultAsync(m => m.UserId == userId && m.WorkspaceId == workspaceId)
@@ -72,7 +72,7 @@ public class WorkspaceMemberService(AppDbContext context, UserManager<AppUser> u
         };
     }
 
-    public async Task<WorkspaceMemberDto> PromoteAsync(string userId, Guid workspaceId, string targetUserId)
+    public async Task<WorkspaceMemberDto> PromoteMemberAsync(string userId, Guid workspaceId, string targetUserId)
     {
         var requester = await _context.WorkspaceMembers.Include(wm => wm.AppUser)
             .FirstOrDefaultAsync(r => r.UserId == userId && r.WorkspaceId == workspaceId)
@@ -103,7 +103,7 @@ public class WorkspaceMemberService(AppDbContext context, UserManager<AppUser> u
         };
     }
 
-    public async Task RemoveAsync(string userId, Guid workspaceId, string targetUserId)
+    public async Task RemoveMemberAsync(string userId, Guid workspaceId, string targetUserId)
     {
         var requester = await _context.WorkspaceMembers.Include(wm => wm.AppUser)
             .FirstOrDefaultAsync(r => r.UserId == userId && r.WorkspaceId == workspaceId)

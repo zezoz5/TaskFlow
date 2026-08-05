@@ -13,7 +13,7 @@ public class CommentConfiguration : IEntityTypeConfiguration<Comment>
 
         builder.Property(x => x.Body)
             .IsRequired()
-            .HasMaxLength(300);
+            .HasMaxLength(500);
 
         builder.HasOne(x => x.Writer)
             .WithMany(x => x.Comments)

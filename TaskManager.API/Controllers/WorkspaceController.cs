@@ -20,7 +20,7 @@ public class WorkspaceController(IWorkspaceService service) : ControllerBase
         var userId = User.FindFirstValue(JwtRegisteredClaimNames.Sub);
         if (userId == null) return Unauthorized();
 
-        var workspaces = await _service.GetAll(userId);
+        var workspaces = await _service.GetAllWorkspacesAsync(userId);
         return Ok(workspaces);
     }
 
@@ -30,7 +30,7 @@ public class WorkspaceController(IWorkspaceService service) : ControllerBase
         var userId = User.FindFirstValue(JwtRegisteredClaimNames.Sub);
         if (userId == null) return Unauthorized();
 
-        var workspace = await _service.GetById(id, userId);
+        var workspace = await _service.GetWorkspaceByIdAsync(id, userId);
         return Ok(workspace);
     }
 
@@ -40,7 +40,7 @@ public class WorkspaceController(IWorkspaceService service) : ControllerBase
         var userId = User.FindFirstValue(JwtRegisteredClaimNames.Sub);
         if (userId == null) return Unauthorized();
 
-        var workspace = await _service.CreateWorkspace(dto, userId);
+        var workspace = await _service.CreateWorkspaceAsync(dto, userId);
         return CreatedAtAction(
             actionName: nameof(GetById),
             routeValues: new { id = workspace.Id },
@@ -54,7 +54,7 @@ public class WorkspaceController(IWorkspaceService service) : ControllerBase
         var userId = User.FindFirstValue(JwtRegisteredClaimNames.Sub);
         if (userId == null) return Unauthorized();
 
-        var updatedWorkspace = await _service.UpdateWorkspace(id, dto, userId);
+        var updatedWorkspace = await _service.UpdateWorkspaceAsync(id, dto, userId);
         return Ok(updatedWorkspace);
     }
 
@@ -64,7 +64,7 @@ public class WorkspaceController(IWorkspaceService service) : ControllerBase
         var userId = User.FindFirstValue(JwtRegisteredClaimNames.Sub);
         if (userId == null) return Unauthorized();
 
-        await _service.DeleteWorkspace(id, userId);
+        await _service.RemoveWorkspaceAsync(id, userId);
 
         return NoContent();
     }

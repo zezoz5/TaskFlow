@@ -12,7 +12,7 @@ public class WorkspaceConfiguration : IEntityTypeConfiguration<Workspace>
 
         builder.Property(x => x.Name)
             .IsRequired()
-            .HasMaxLength(30);
+            .HasMaxLength(100);
 
         builder.Property(x => x.Description)
             .IsRequired(false);

@@ -23,6 +23,7 @@ public class ProjectServiceTests
         _sut = new ProjectService(_context);
     }
 
+    // CreateProjectAsync
     [Fact]
     public async Task CreateProjectAsync_Manager_Succeeds()
     {
@@ -76,5 +77,43 @@ public class ProjectServiceTests
             => _sut.CreateProjectAsync(userId, workspaceId, dto));
 
         Assert.Equal("You don't have permission", ex.Message);
+    }
+
+    // UpdateProjectAsync
+    [Fact]
+    public async Task UpdateProjectAsync_PartialUpdate()
+    {
+        // Arrange
+        Guid workspaceId = Guid.NewGuid();
+        Guid projectId = Guid.NewGuid();
+        string userId = Guid.NewGuid().ToString();
+
+        var workspace = new Workspace { Id = workspaceId, OwnerId = userId, Name = "Test Workspace" };
+        _context.Workspaces.Add(workspace);
+
+        var user = new AppUser { Id = userId, FullName = "Test User", UserName = "Test@TaskFlow.com", Email = "Test@TaskFlow.com" };
+        _context.Users.Add(user);
+
+        _context.WorkspaceMembers.Add(new WorkspaceMember { UserId = userId, WorkspaceId = workspaceId, Role = WorkspaceRole.Owner });
+
+        var project = new Project { Id = projectId, WorkspaceId = workspaceId, Name = "Backend API", Description = "Version 1", Status = ProjectStatus.Active };
+        _context.Projects.Add(project);
+
+        await _context.SaveChangesAsync();
+
+        var dto = new UpdateProjectDto { Name = "TaskFlow API" };
+
+        // Act
+        var result = await _sut.UpdateProjectAsync(userId, workspaceId, projectId, dto);
+
+        // Assert
+        var updatedProject = await _context.Projects.FirstOrDefaultAsync(p => p.Id == projectId);
+        Assert.NotNull(updatedProject);
+
+        Assert.Equal(dto.Name, result.Name);
+
+        Assert.Equal(dto.Name, updatedProject.Name);
+        Assert.Equal("Version 1", updatedProject.Description);
+        Assert.Equal(ProjectStatus.Active, updatedProject.Status);
     }
 }

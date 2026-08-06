@@ -33,9 +33,10 @@ public class WorkspaceMemberServiceTests
         context.WorkspaceMembers.Add(new WorkspaceMember { Workspace = workspace, UserId = targetUserId, Role = WorkspaceRole.Manager });
         await context.SaveChangesAsync();
 
+        // Act
         var sut = new WorkspaceMemberService(context, null!);
 
-        // Act + Assert
+        // Assert
         var ex = await Assert.ThrowsAsync<AppException>(()
             => sut.RemoveMemberAsync(requesterId, workspaceId, targetUserId));
 
@@ -43,7 +44,7 @@ public class WorkspaceMemberServiceTests
     }
 
     [Fact]
-    public async Task RemoveMemberAsync_OwnerTargetsManager_Succeed()
+    public async Task RemoveMemberAsync_OwnerTargetsManager_Succeeds()
     {
         // Arrange
         var options = new DbContextOptionsBuilder<AppDbContext>()
@@ -68,9 +69,10 @@ public class WorkspaceMemberServiceTests
 
         var sut = new WorkspaceMemberService(context, null!);
 
-        // Act + Assert
+        // Act
         await sut.RemoveMemberAsync(requesterId, workspaceId, targetUserId);
 
+        // Assert
         var stillExists = await context.WorkspaceMembers
             .AnyAsync(wm => wm.UserId == targetUserId && wm.WorkspaceId == workspaceId);
         Assert.False(stillExists);
@@ -100,6 +102,7 @@ public class WorkspaceMemberServiceTests
         context.WorkspaceMembers.Add(new WorkspaceMember { UserId = requesterId, Workspace = workspace, Role = WorkspaceRole.Manager });
         context.WorkspaceMembers.Add(new WorkspaceMember { UserId = targetUserId, Workspace = workspace, Role = WorkspaceRole.Owner });
         await context.SaveChangesAsync();
+
 
         var sut = new WorkspaceMemberService(context, null!);
 

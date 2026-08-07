@@ -116,4 +116,103 @@ public class ProjectServiceTests
         Assert.Equal("Version 1", updatedProject.Description);
         Assert.Equal(ProjectStatus.Active, updatedProject.Status);
     }
+
+    [Fact]
+    public async Task UpdateProjectAsync_ProjectNotFound_Throws()
+    {
+        // Arrange
+        Guid workspaceId = Guid.NewGuid();
+        Guid projectId = Guid.NewGuid();
+        string userId = Guid.NewGuid().ToString();
+
+        var workspace = new Workspace { Id = workspaceId, OwnerId = userId, Name = "Test Workspace" };
+        _context.Workspaces.Add(workspace);
+
+        var user = new AppUser { Id = userId, FullName = "Test User", UserName = "Test@TaskFlow.com", Email = "Test@TaskFlow.com" };
+        _context.Users.Add(user);
+
+        _context.WorkspaceMembers.Add(new WorkspaceMember { UserId = userId, WorkspaceId = workspaceId, Role = WorkspaceRole.Owner });
+
+        await _context.SaveChangesAsync();
+
+        var dto = new UpdateProjectDto { Name = "TaskFlow API" };
+
+        // Act + Assert
+        var ex = await Assert.ThrowsAsync<AppException>(()
+            => _sut.UpdateProjectAsync(userId, workspaceId, projectId, dto));
+
+        Assert.Equal("Project not found", ex.Message);
+    }
+
+    // RemoveProjectAsync
+    [Fact]
+    public async Task RemoveProjectAsync_Manager_Succeeds()
+    {
+        // Arrange
+        Guid workspaceId = Guid.NewGuid();
+        Guid projectId = Guid.NewGuid();
+        string userId = Guid.NewGuid().ToString();
+
+        var workspace = new Workspace { Id = workspaceId, OwnerId = Guid.NewGuid().ToString(), Name = "Test Workspace" };
+        _context.Workspaces.Add(workspace);
+
+        var user = new AppUser { Id = userId, FullName = "Test User", UserName = "Test@TaskFlow.com", Email = "Test@TaskFlow.com" };
+        _context.Users.Add(user);
+
+        _context.WorkspaceMembers.Add(new WorkspaceMember { UserId = userId, WorkspaceId = workspaceId, Role = WorkspaceRole.Manager });
+
+        var project = new Project { Id = projectId, WorkspaceId = workspaceId, Name = "Backend API", Description = "Version 1", Status = ProjectStatus.Active };
+        _context.Projects.Add(project);
+
+        await _context.SaveChangesAsync();
+
+        // Act
+        await _sut.RemoveProjectAsync(userId, workspaceId, projectId);
+
+        // Assert
+        var stillExist = await _context.Projects.AnyAsync(p => p.Id == projectId);
+        Assert.False(stillExist);
+    }
+
+    // GetAllProjectsAsync
+    [Fact]
+    public async Task GetAllProjectsAsync_ReturnsProjects()
+    {
+        // Arrange
+        Guid workspaceId = Guid.NewGuid();
+        Guid projectId1 = Guid.NewGuid();
+        Guid projectId2 = Guid.NewGuid();
+        Guid projectId3 = Guid.NewGuid();
+        string userId = Guid.NewGuid().ToString();
+
+        var workspace = new Workspace { Id = workspaceId, OwnerId = Guid.NewGuid().ToString(), Name = "Test Workspace" };
+        _context.Workspaces.Add(workspace);
+
+        var user = new AppUser { Id = userId, FullName = "Test User", UserName = "Test@TaskFlow.com", Email = "Test@TaskFlow.com" };
+        _context.Users.Add(user);
+
+        _context.WorkspaceMembers.Add(new WorkspaceMember { UserId = userId, WorkspaceId = workspaceId, Role = WorkspaceRole.Member });
+
+        var project1 = new Project { Id = projectId1, WorkspaceId = workspaceId, Name = "Backend API", Description = "Version 1", Status = ProjectStatus.Active };
+        var project2 = new Project { Id = projectId2, WorkspaceId = workspaceId, Name = "Frontend", Description = "Version 1", Status = ProjectStatus.Active };
+        var project3 = new Project { Id = projectId3, WorkspaceId = workspaceId, Name = "Mobile App", Description = "Version 1", Status = ProjectStatus.Active };
+        _context.Projects.AddRange(project1, project2, project3);
+
+        await _context.SaveChangesAsync();
+
+        // Act
+        var result = await _sut.GetAllProjectsAsync(userId, workspaceId);
+
+        // Assert
+        Assert.Equal(3, result.Count());
+
+        var p1 = result.Any(p => p.Name == project1.Name);
+        Assert.True(p1);
+
+        var p2 = result.Any(p => p.Name == project2.Name);
+        Assert.True(p2);
+
+        var p3 = result.Any(p => p.Name == project3.Name);
+        Assert.True(p3);
+    }
 }

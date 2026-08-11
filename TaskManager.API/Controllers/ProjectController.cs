@@ -1,10 +1,8 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using TaskManager.Core.DTOs.Project;
-using TaskManager.Core.Entities;
 using TaskManager.Core.Interfaces;
 
 namespace TaskManager.API.Controllers;

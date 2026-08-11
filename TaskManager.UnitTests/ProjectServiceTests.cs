@@ -5,6 +5,7 @@ using TaskManager.Infrastructure.Services;
 using TaskManager.Core.Enums;
 using TaskManager.Core.DTOs.Project;
 using TaskManager.Core.Exceptions;
+using TaskManager.UnitTests.helpers;
 
 namespace TaskManager.UnitTests;
 
@@ -175,33 +176,95 @@ public class ProjectServiceTests
     }
 
     // GetAllProjectsAsync
+    // Old manual setup — replaced below with TestDataHelper
     [Fact]
     public async Task GetAllProjectsAsync_ReturnsProjects()
     {
         // Arrange
-        Guid workspaceId = Guid.NewGuid();
-        Guid projectId1 = Guid.NewGuid();
-        Guid projectId2 = Guid.NewGuid();
-        Guid projectId3 = Guid.NewGuid();
-        string userId = Guid.NewGuid().ToString();
+        // Guid workspaceId = Guid.NewGuid();
+        // string userId = Guid.NewGuid().ToString();
+        // Guid projectId1 = Guid.NewGuid();
+        // Guid projectId2 = Guid.NewGuid();
+        // Guid projectId3 = Guid.NewGuid();
 
-        var workspace = new Workspace { Id = workspaceId, OwnerId = Guid.NewGuid().ToString(), Name = "Test Workspace" };
+        /*
+        var workspace = new Workspace
+        {
+            Id = workspaceId,
+            OwnerId = Guid.NewGuid().ToString(),
+            Name = "Test Workspace"
+        };
+        */
+        var workspace = TestDataHelper.CreateWorkspace();
         _context.Workspaces.Add(workspace);
 
-        var user = new AppUser { Id = userId, FullName = "Test User", UserName = "Test@TaskFlow.com", Email = "Test@TaskFlow.com" };
+        /*
+        var user = new AppUser
+        {
+            Id = userId,
+            FullName = "Test User",
+            UserName = "Test@TaskFlow.com",
+            Email = "Test@TaskFlow.com"
+        };
+        */
+
+        var user = TestDataHelper.CreateUser();
         _context.Users.Add(user);
 
-        _context.WorkspaceMembers.Add(new WorkspaceMember { UserId = userId, WorkspaceId = workspaceId, Role = WorkspaceRole.Member });
+        _context.WorkspaceMembers.Add(new WorkspaceMember
+        {
+            UserId = user.Id,
+            WorkspaceId = workspace.Id,
+            Role = WorkspaceRole.Member
+        });
 
-        var project1 = new Project { Id = projectId1, WorkspaceId = workspaceId, Name = "Backend API", Description = "Version 1", Status = ProjectStatus.Active };
-        var project2 = new Project { Id = projectId2, WorkspaceId = workspaceId, Name = "Frontend", Description = "Version 1", Status = ProjectStatus.Active };
-        var project3 = new Project { Id = projectId3, WorkspaceId = workspaceId, Name = "Mobile App", Description = "Version 1", Status = ProjectStatus.Active };
+        /*
+        var project1 = new Project
+        {
+            Id = projectId1,
+            WorkspaceId = workspaceId,
+            Name = "Backend API",
+            Description = "Version 1",
+            Status = ProjectStatus.Active
+        };
+
+        var project2 = new Project
+        {
+            Id = projectId2,
+            WorkspaceId = workspaceId,
+            Name = "Frontend",
+            Description = "Version 1",
+            Status = ProjectStatus.Active
+        };
+
+        var project3 = new Project
+        {
+            Id = projectId3,
+            WorkspaceId = workspaceId,
+            Name = "Mobile App",
+            Description = "Version 1",
+            Status = ProjectStatus.Active
+        };
+        */
+
+        var project1 = TestDataHelper.CreateProject();
+        project1.Name = "Backend API";
+        project1.WorkspaceId = workspace.Id;
+
+        var project2 = TestDataHelper.CreateProject();
+        project2.Name = "Frontend";
+        project2.WorkspaceId = workspace.Id;
+
+        var project3 = TestDataHelper.CreateProject();
+        project3.Name = "Mobile App";
+        project3.WorkspaceId = workspace.Id;
+
         _context.Projects.AddRange(project1, project2, project3);
 
         await _context.SaveChangesAsync();
 
         // Act
-        var result = await _sut.GetAllProjectsAsync(userId, workspaceId);
+        var result = await _sut.GetAllProjectsAsync(user.Id, workspace.Id);
 
         // Assert
         Assert.Equal(3, result.Count());

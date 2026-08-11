@@ -35,15 +35,4 @@ public class TestDataHelper
             Description = "Version 1"
         };
     }
-
-    public static TaskItem CreateTask()
-    {
-        return new TaskItem
-        {
-            Id = Guid.NewGuid(),
-            ProjectId = Guid.NewGuid(),
-            Title = "Test Task",
-            Description = "Version 1"
-        };
-    }
 }

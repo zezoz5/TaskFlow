@@ -8,7 +8,7 @@ public class TaskItem
     public string Title { get; set; } = null!;
     public string? Description { get; set; }
     public TaskItemStatus Status { get; set; } = TaskItemStatus.Todo;
-    public TaskItemPriority Priority { get; set; }
+    public TaskItemPriority Priority { get; set; } = TaskItemPriority.Low;
     public DateTime? Deadline { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 

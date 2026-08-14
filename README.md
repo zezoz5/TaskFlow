@@ -186,6 +186,16 @@ To authenticate in Swagger: call `/api/auth/login`, copy the token from the resp
 
 ---
 
+## Tests
+
+Unit tests cover the service layer's authorization logic using xUnit and EF Core's InMemory provider.
+
+```bash
+dotnet test
+```
+
+---
+
 ## Demo
 
 A visual demo page is included to explore the API without needing Swagger.
@@ -204,7 +214,8 @@ A visual demo page is included to explore the API without needing Swagger.
 - **EF Core navigation properties** — when `.Select()` auto-joins vs. when `.Include()` is required
 - **Guard clause pattern** for cleaner, more readable authorization logic
 - **Pagination and filtering** using incremental LINQ query building
-- Real debugging skills — tracing 401 errors through middleware, claim inspection, package version conflicts
+- **Real debugging skills** — tracing 401 errors through middleware, claim inspection, package version conflicts
+- **Unit testing service-layer logic** with xUnit and EF Core's InMemory provider — seeding related entities through navigation properties (not just foreign key values) to satisfy relationship constraints, and asserting on exception *messages*, not just types, after catching a test that was passing for the wrong reason
 
 ---
 
@@ -212,7 +223,7 @@ A visual demo page is included to explore the API without needing Swagger.
 
 - **Refresh Tokens** — short-lived access tokens with long-lived refresh tokens for production-ready authentication
 - **OAuth 2.0** — Google/GitHub login for verified emails and frictionless registration
-- **Comprehensive Unit & Integration Testing** — service layer testing with xUnit and Moq
+- **Integration Testing** — end-to-end API testing with `WebApplicationFactory`
 - **CI/CD** — automated build and deploy pipeline with GitHub Actions
 - **Deployment** — host the API on Azure with a cloud SQL Server instance
 

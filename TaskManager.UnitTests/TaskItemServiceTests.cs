@@ -1,28 +1,12 @@
-using Microsoft.EntityFrameworkCore;
-using TaskManager.Core.Entities;
 using TaskManager.Core.DTOs.Task;
 using TaskManager.Core.Enums;
-using TaskManager.Infrastructure.Data;
-using TaskManager.Infrastructure.Services;
-using TaskManager.UnitTests.helpers;
 using TaskManager.UnitTests.Helpers;
 
 namespace TaskManager.UnitTests;
 
 public class TaskItemServiceTests
 {
-    private readonly AppDbContext _context;
-    private readonly TaskItemService _sut;
-    public TaskItemServiceTests()
-    {
-        var options = new DbContextOptionsBuilder<AppDbContext>()
-        .UseInMemoryDatabase(Guid.NewGuid().ToString())
-        .Options;
 
-        _context = new AppDbContext(options);
-
-        _sut = new TaskItemService(_context);
-    }
 
     [Theory]
     [InlineData(TaskItemStatus.Todo)]
@@ -31,52 +15,35 @@ public class TaskItemServiceTests
     public async Task GetAllTasksAsync_FilterByStatus_ReturnsMatchingTasks(TaskItemStatus status)
     {
         // Arrange
-        var user = TestDataHelper.CreateUser();
-        _context.Users.Add(user);
+        var fixture = new TaskItemServiceFixture();
 
-        var workspace = TestDataHelper.CreateWorkspace();
-        _context.Workspaces.Add(workspace);
-
-        _context.WorkspaceMembers.Add(new WorkspaceMember
-        {
-            UserId = user.Id,
-            WorkspaceId = workspace.Id,
-            Role = WorkspaceRole.Member
-        });
-
-        var project = TestDataHelper.CreateProject();
-        project.WorkspaceId = workspace.Id;
-        _context.Projects.Add(project);
-
-        var task1 = new TaskBuilder()
-            .WithCreatorId(user.Id)
-            .WithProjectId(project.Id)
+        var task1 = new TaskItemBuilder()
+            .WithCreatorId(fixture.User.Id)
+            .WithProjectId(fixture.Project.Id)
             .WithStatus(TaskItemStatus.Todo)
             .Build();
 
-        _context.TaskItems.Add(task1);
 
-        var task2 = new TaskBuilder()
-            .WithCreatorId(user.Id)
-            .WithProjectId(project.Id)
+        var task2 = new TaskItemBuilder()
+            .WithCreatorId(fixture.User.Id)
+            .WithProjectId(fixture.Project.Id)
             .WithStatus(TaskItemStatus.InProgress)
             .Build();
 
-        _context.TaskItems.Add(task2);
 
-        var task3 = new TaskBuilder()
-            .WithCreatorId(user.Id)
-            .WithProjectId(project.Id)
+        var task3 = new TaskItemBuilder()
+            .WithCreatorId(fixture.User.Id)
+            .WithProjectId(fixture.Project.Id)
             .WithStatus(TaskItemStatus.Done)
             .Build();
 
-        _context.TaskItems.Add(task3);
-        await _context.SaveChangesAsync();
+        fixture.Context.TaskItems.AddRange(task1, task2, task3);
+        await fixture.Context.SaveChangesAsync();
 
         var queryDto = new TaskQueryParamsDto { Status = status };
 
         // Act
-        var result = await _sut.GetAllTasksAsync(user.Id, workspace.Id, project.Id, queryDto);
+        var result = await fixture.Sut.GetAllTasksAsync(fixture.User.Id, fixture.Workspace.Id, fixture.Project.Id, queryDto);
 
         // Assert
         Assert.Equal(1, result.TotalCount);
@@ -90,46 +57,137 @@ public class TaskItemServiceTests
     public async Task GetAllTasksAsync_FilterByPriority_ReturnsMatchingTasks(TaskItemPriority priority)
     {
         // Arrange
-        var user = TestDataHelper.CreateUser();
-        _context.Users.Add(user);
+        var fixture = new TaskItemServiceFixture();
 
-        var workspace = TestDataHelper.CreateWorkspace();
-        _context.Workspaces.Add(workspace);
-
-        _context.WorkspaceMembers.Add(new WorkspaceMember { UserId = user.Id, WorkspaceId = workspace.Id, Role = WorkspaceRole.Member });
-
-        var project = TestDataHelper.CreateProject();
-        project.WorkspaceId = workspace.Id;
-        _context.Projects.Add(project);
-
-        var task1 = new TaskBuilder()
-            .WithCreatorId(user.Id)
-            .WithProjectId(project.Id)
+        var task1 = new TaskItemBuilder()
+            .WithCreatorId(fixture.User.Id)
+            .WithProjectId(fixture.Project.Id)
             .WithPriority(TaskItemPriority.Low)
             .Build();
 
-        var task2 = new TaskBuilder()
-            .WithCreatorId(user.Id)
-            .WithProjectId(project.Id)
+        var task2 = new TaskItemBuilder()
+           .WithCreatorId(fixture.User.Id)
+            .WithProjectId(fixture.Project.Id)
             .WithPriority(TaskItemPriority.Medium)
             .Build();
 
-        var task3 = new TaskBuilder()
-            .WithCreatorId(user.Id)
-            .WithProjectId(project.Id)
+        var task3 = new TaskItemBuilder()
+           .WithCreatorId(fixture.User.Id)
+            .WithProjectId(fixture.Project.Id)
             .WithPriority(TaskItemPriority.High)
             .Build();
 
-        _context.TaskItems.AddRange(task1, task2, task3);
-        await _context.SaveChangesAsync();
+        fixture.Context.TaskItems.AddRange(task1, task2, task3);
+        await fixture.Context.SaveChangesAsync();
 
         var queryDto = new TaskQueryParamsDto { Priority = priority };
 
         // Act
-        var result = await _sut.GetAllTasksAsync(user.Id, workspace.Id, project.Id, queryDto);
+        var result = await fixture.Sut.GetAllTasksAsync(fixture.User.Id, fixture.Workspace.Id, fixture.Project.Id, queryDto);
 
         // Assert
         Assert.Equal(1, result.TotalCount);
         Assert.True(result.Items.All(t => t.Priority == priority));
+    }
+
+    [Fact]
+    public async Task GetAllTasksAsync_Pagination_ReturnsCorrectPage()
+    {
+        // Arrange
+        var fixture = new TaskItemServiceFixture();
+
+        var task1 = new TaskItemBuilder()
+            .WithCreatorId(fixture.User.Id)
+            .WithProjectId(fixture.Project.Id)
+            .Build();
+
+        var task2 = new TaskItemBuilder()
+            .WithCreatorId(fixture.User.Id)
+            .WithProjectId(fixture.Project.Id)
+            .Build();
+
+        var task3 = new TaskItemBuilder()
+            .WithCreatorId(fixture.User.Id)
+            .WithProjectId(fixture.Project.Id)
+            .Build();
+
+        var task4 = new TaskItemBuilder()
+            .WithCreatorId(fixture.User.Id)
+            .WithProjectId(fixture.Project.Id)
+            .Build();
+
+        var task5 = new TaskItemBuilder()
+            .WithCreatorId(fixture.User.Id)
+            .WithProjectId(fixture.Project.Id)
+            .Build();
+
+        var queryDto = new TaskQueryParamsDto
+        {
+            Page = 1,
+            PageSize = 2
+        };
+
+        fixture.Context.TaskItems.AddRange(task1, task2, task3, task4, task5);
+        await fixture.Context.SaveChangesAsync();
+
+        // Act
+        var result = await fixture.Sut.GetAllTasksAsync(fixture.User.Id, fixture.Workspace.Id, fixture.Project.Id, queryDto);
+
+        // Assert
+        Assert.Equal(5, result.TotalCount);
+        Assert.Equal(1, result.Page);
+        Assert.Equal(2, result.PageSize);
+        Assert.Equal(2, result.Items.Count());
+
+    }
+
+    [Fact]
+    public async Task GetAllTasksAsync_Pagination_ReturnsSecondPage()
+    {
+        // Arrange
+        var fixture = new TaskItemServiceFixture();
+
+        var task1 = new TaskItemBuilder()
+            .WithCreatorId(fixture.User.Id)
+            .WithProjectId(fixture.Project.Id)
+            .Build();
+
+        var task2 = new TaskItemBuilder()
+            .WithCreatorId(fixture.User.Id)
+            .WithProjectId(fixture.Project.Id)
+            .Build();
+
+        var task3 = new TaskItemBuilder()
+            .WithCreatorId(fixture.User.Id)
+            .WithProjectId(fixture.Project.Id)
+            .Build();
+
+        var task4 = new TaskItemBuilder()
+            .WithCreatorId(fixture.User.Id)
+            .WithProjectId(fixture.Project.Id)
+            .Build();
+
+        var task5 = new TaskItemBuilder()
+            .WithCreatorId(fixture.User.Id)
+            .WithProjectId(fixture.Project.Id)
+            .Build();
+
+        var queryDto = new TaskQueryParamsDto
+        {
+            Page = 2,
+            PageSize = 2
+        };
+
+        fixture.Context.TaskItems.AddRange(task1, task2, task3, task4, task5);
+        await fixture.Context.SaveChangesAsync();
+
+        // Act
+        var result = await fixture.Sut.GetAllTasksAsync(fixture.User.Id, fixture.Workspace.Id, fixture.Project.Id, queryDto);
+
+        // Assert
+        Assert.Equal(5, result.TotalCount);
+        Assert.Equal(2, result.Page);
+        Assert.Equal(2, result.PageSize);
+        Assert.Equal(2, result.Items.Count());
     }
 }

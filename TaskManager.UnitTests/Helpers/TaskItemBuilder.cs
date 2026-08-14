@@ -3,7 +3,7 @@ using TaskManager.Core.Enums;
 
 namespace TaskManager.UnitTests.Helpers
 {
-    public class TaskBuilder
+    public class TaskItemBuilder
     {
         private readonly TaskItem _task = new()
         {
@@ -12,44 +12,44 @@ namespace TaskManager.UnitTests.Helpers
             ProjectId = Guid.NewGuid()
         };
 
-        public TaskBuilder WithCreatorId(string creatorId)
+        public TaskItemBuilder WithCreatorId(string creatorId)
         {
             _task.CreatorId = creatorId;
 
             return this;
         }
-        public TaskBuilder WithAssignedToId(string assignedToId)
+        public TaskItemBuilder WithAssignedToId(string assignedToId)
         {
             _task.AssignedToId = assignedToId;
 
             return this;
         }
-        public TaskBuilder WithProjectId(Guid projectId)
+        public TaskItemBuilder WithProjectId(Guid projectId)
         {
             _task.ProjectId = projectId;
 
             return this;
         }
 
-        public TaskBuilder WithTitle(string title)
+        public TaskItemBuilder WithTitle(string title)
         {
             _task.Title = title;
 
             return this;
         }
-        public TaskBuilder WithDescription(string description)
+        public TaskItemBuilder WithDescription(string description)
         {
             _task.Description = description;
 
             return this;
         }
-        public TaskBuilder WithStatus(TaskItemStatus status)
+        public TaskItemBuilder WithStatus(TaskItemStatus status)
         {
             _task.Status = status;
 
             return this;
         }
-        public TaskBuilder WithPriority(TaskItemPriority priority)
+        public TaskItemBuilder WithPriority(TaskItemPriority priority)
         {
             _task.Priority = priority;
 

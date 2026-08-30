@@ -13,6 +13,7 @@ TaskFlow lets teams of any size — from a group of friends to a company departm
 - **Database:** SQL Server with Entity Framework Core 10
 - **Authentication:** ASP.NET Core Identity + JWT Bearer tokens
 - **API Docs:** Swagger UI (Swashbuckle)
+- **Containerization:** Docker & Docker Compose
 
 ---
 
@@ -71,7 +72,7 @@ Dependencies only flow inward: API → Infrastructure → Core. The Core layer k
 ### Workspaces
 
 | Method | Endpoint              | Description                         |
-| ------ | --------------------- | ----------------------------------- |
+| ------ | --------------------- | ------------------------------------ |
 | GET    | `/api/workspace`      | Get all workspaces for current user |
 | GET    | `/api/workspace/{id}` | Get workspace by ID                 |
 | POST   | `/api/workspace`      | Create a new workspace              |
@@ -80,8 +81,8 @@ Dependencies only flow inward: API → Infrastructure → Core. The Core layer k
 
 ### Workspace Members
 
-| Method | Endpoint                                                | Description               |
-| ------ | ------------------------------------------------------- | ------------------------- |
+| Method | Endpoint                                                | Description                |
+| ------ | -------------------------------------------------------- | --------------------------- |
 | GET    | `/api/workspace/{workspaceId}/members`                  | List all members          |
 | POST   | `/api/workspace/{workspaceId}/members`                  | Invite a member by email  |
 | PUT    | `/api/workspace/{workspaceId}/members/{userId}/promote` | Promote member to Manager |
@@ -89,29 +90,29 @@ Dependencies only flow inward: API → Infrastructure → Core. The Core layer k
 
 ### Projects
 
-| Method | Endpoint                                            | Description       |
-| ------ | --------------------------------------------------- | ----------------- |
-| GET    | `/api/workspace/{workspaceId}/projects`             | Get all projects  |
-| GET    | `/api/workspace/{workspaceId}/projects/{projectId}` | Get project by ID |
-| POST   | `/api/workspace/{workspaceId}/projects`             | Create a project  |
-| PUT    | `/api/workspace/{workspaceId}/projects/{projectId}` | Update a project  |
-| DELETE | `/api/workspace/{workspaceId}/projects/{projectId}` | Delete a project  |
+| Method | Endpoint                                             | Description        |
+| ------ | ----------------------------------------------------- | ------------------- |
+| GET    | `/api/workspace/{workspaceId}/projects`              | Get all projects   |
+| GET    | `/api/workspace/{workspaceId}/projects/{projectId}`  | Get project by ID  |
+| POST   | `/api/workspace/{workspaceId}/projects`              | Create a project   |
+| PUT    | `/api/workspace/{workspaceId}/projects/{projectId}`  | Update a project   |
+| DELETE | `/api/workspace/{workspaceId}/projects/{projectId}`  | Delete a project   |
 
 ### Tasks
 
-| Method | Endpoint                                                                  | Description                             |
-| ------ | ------------------------------------------------------------------------- | --------------------------------------- |
-| GET    | `/api/workspace/{workspaceId}/projects/{projectId}/tasks`                 | Get tasks (with filtering & pagination) |
-| GET    | `/api/workspace/{workspaceId}/projects/{projectId}/tasks/{taskId}`        | Get task by ID                          |
-| POST   | `/api/workspace/{workspaceId}/projects/{projectId}/tasks`                 | Create a task                           |
-| PUT    | `/api/workspace/{workspaceId}/projects/{projectId}/tasks/{taskId}`        | Update a task                           |
-| PUT    | `/api/workspace/{workspaceId}/projects/{projectId}/tasks/{taskId}/status` | Update task status only                 |
-| DELETE | `/api/workspace/{workspaceId}/projects/{projectId}/tasks/{taskId}`        | Delete a task                           |
+| Method | Endpoint                                                                    | Description                              |
+| ------ | ----------------------------------------------------------------------------- | ------------------------------------------ |
+| GET    | `/api/workspace/{workspaceId}/projects/{projectId}/tasks`                   | Get tasks (with filtering & pagination)  |
+| GET    | `/api/workspace/{workspaceId}/projects/{projectId}/tasks/{taskId}`          | Get task by ID                           |
+| POST   | `/api/workspace/{workspaceId}/projects/{projectId}/tasks`                   | Create a task                            |
+| PUT    | `/api/workspace/{workspaceId}/projects/{projectId}/tasks/{taskId}`          | Update a task                            |
+| PUT    | `/api/workspace/{workspaceId}/projects/{projectId}/tasks/{taskId}/status`   | Update task status only                  |
+| DELETE | `/api/workspace/{workspaceId}/projects/{projectId}/tasks/{taskId}`          | Delete a task                            |
 
 #### Task Filtering Query Parameters
 
-| Parameter        | Type         | Example                      |
-| ---------------- | ------------ | ---------------------------- |
+| Parameter        | Type         | Example                       |
+| ------------------ | ------------ | ------------------------------ |
 | `status`         | enum         | `?status=InProgress`         |
 | `priority`       | enum         | `?priority=High`             |
 | `assignedToId`   | string       | `?assignedToId=userId`       |
@@ -121,13 +122,13 @@ Dependencies only flow inward: API → Infrastructure → Core. The Core layer k
 
 ### Comments
 
-| Method | Endpoint                                                                                | Description                  |
-| ------ | --------------------------------------------------------------------------------------- | ---------------------------- |
-| GET    | `/api/workspace/{workspaceId}/projects/{projectId}/tasks/{taskId}/comments`             | Get all comments             |
-| GET    | `/api/workspace/{workspaceId}/projects/{projectId}/tasks/{taskId}/comments/{commentId}` | Get comment by ID            |
-| POST   | `/api/workspace/{workspaceId}/projects/{projectId}/tasks/{taskId}/comments`             | Add a comment                |
-| PUT    | `/api/workspace/{workspaceId}/projects/{projectId}/tasks/{taskId}/comments/{commentId}` | Edit a comment (author only) |
-| DELETE | `/api/workspace/{workspaceId}/projects/{projectId}/tasks/{taskId}/comments/{commentId}` | Delete a comment             |
+| Method | Endpoint                                                                                    | Description                    |
+| ------ | ---------------------------------------------------------------------------------------------- | -------------------------------- |
+| GET    | `/api/workspace/{workspaceId}/projects/{projectId}/tasks/{taskId}/comments`                 | Get all comments               |
+| GET    | `/api/workspace/{workspaceId}/projects/{projectId}/tasks/{taskId}/comments/{commentId}`     | Get comment by ID              |
+| POST   | `/api/workspace/{workspaceId}/projects/{projectId}/tasks/{taskId}/comments`                 | Add a comment                  |
+| PUT    | `/api/workspace/{workspaceId}/projects/{projectId}/tasks/{taskId}/comments/{commentId}`     | Edit a comment (author only)   |
+| DELETE | `/api/workspace/{workspaceId}/projects/{projectId}/tasks/{taskId}/comments/{commentId}`     | Delete a comment               |
 
 ---
 
@@ -136,9 +137,20 @@ Dependencies only flow inward: API → Infrastructure → Core. The Core layer k
 ### Prerequisites
 
 - .NET 10 SDK
-- SQL Server (local or remote)
+- SQL Server (local or remote) — for the manual setup path
+- Docker & Docker Compose — for the containerized setup path
 
-### Setup
+### Environment Variables
+
+Only needed for the Docker path below. Copy `.env.example` to `.env` and fill in real values:
+
+| Variable      | Description                                     |
+| -------------- | ------------------------------------------------ |
+| `DB_USERNAME` | SQL Server login (`sa` for the Docker database) |
+| `DB_PASSWORD` | SQL Server password                             |
+| `JWT_KEY`     | Secret key for signing JWTs, 32+ characters     |
+
+### Option A — Run Locally
 
 1. **Clone the repository**
 
@@ -184,14 +196,28 @@ Navigate to `https://localhost:7173/swagger` to explore and test all endpoints.
 
 To authenticate in Swagger: call `/api/auth/login`, copy the token from the response, click the **Authorize** button, and paste the token.
 
+### Option B — Run with Docker
+
+1. Copy `.env.example` to `.env` and fill in real values
+2. `docker compose up --build`
+3. API available at `http://localhost:8080/swagger`
+
+> Swagger is intentionally enabled in Production here, not just Development — this is a portfolio API, and the goal is letting anyone explore the live endpoints directly. A production system handling real user data would normally lock this down or keep it internal-only.
+
 ---
 
 ## Tests
 
-Unit tests cover the service layer's authorization logic using xUnit and EF Core's InMemory provider.
+**Unit tests** cover the service layer's authorization logic using xUnit and EF Core's InMemory provider — no database required.
 
 ```bash
-dotnet test
+dotnet test TaskManager.UnitTests
+```
+
+**Integration tests** exercise the full API pipeline through `WebApplicationFactory`, against a real SQL Server instance — update the connection string in `TaskManagerWebApplicationFactory` to match your own setup first.
+
+```bash
+dotnet test TaskManager.IntegrationTests
 ```
 
 ---
@@ -216,6 +242,7 @@ A visual demo page is included to explore the API without needing Swagger.
 - **Pagination and filtering** using incremental LINQ query building
 - **Real debugging skills** — tracing 401 errors through middleware, claim inspection, package version conflicts
 - **Unit testing service-layer logic** with xUnit and EF Core's InMemory provider — seeding related entities through navigation properties (not just foreign key values) to satisfy relationship constraints, and asserting on exception *messages*, not just types, after catching a test that was passing for the wrong reason
+- **`.gitignore` vs. `.dockerignore` solve different problems** — the first keeps secrets out of git, the second keeps files out of the Docker build context, and neither one stops a locally-present gitignored file from silently getting copied into an image via `COPY . .`
 
 ---
 
@@ -223,9 +250,8 @@ A visual demo page is included to explore the API without needing Swagger.
 
 - **Refresh Tokens** — short-lived access tokens with long-lived refresh tokens for production-ready authentication
 - **OAuth 2.0** — Google/GitHub login for verified emails and frictionless registration
-- **Integration Testing** — end-to-end API testing with `WebApplicationFactory`
 - **CI/CD** — automated build and deploy pipeline with GitHub Actions
-- **Deployment** — host the API on Azure with a cloud SQL Server instance
+- **Deployment** — host the API on a cloud platform with a managed SQL Server instance
 
 ---
 

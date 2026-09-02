@@ -7,3 +7,4 @@
 .idea/
 *.user
 *.suo
+**/appsettings.Development.json

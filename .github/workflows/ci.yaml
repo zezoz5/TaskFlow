@@ -10,6 +10,26 @@ jobs:
     # GitHub creates a temporary Ubuntu machine
     runs-on: ubuntu-latest
 
+    env:
+      TEST_CONNECTION_STRING: "Server=localhost,14330;Database=TaskFlowDb_Test;User Id=sa;Password=${{ secrets.CI_DB_PASSWORD }};TrustServerCertificate=True"
+
+    services:
+      db:
+        image: mcr.microsoft.com/mssql/server:2025-latest
+
+        env:
+          ACCEPT_EULA: "Y"
+          MSSQL_SA_PASSWORD: ${{ secrets.CI_DB_PASSWORD }}
+
+        ports:
+          - 14330:1433
+
+        options: >-
+          --health-cmd "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P \"$MSSQL_SA_PASSWORD\" -No -Q \"SELECT 1\""
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+
     steps:
       # Get repository
       - name: Checkout code

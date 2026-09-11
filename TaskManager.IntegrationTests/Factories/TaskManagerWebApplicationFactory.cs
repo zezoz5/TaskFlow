@@ -16,7 +16,7 @@ namespace TaskManager.IntegrationTests.Factories
                 config.AddInMemoryCollection(new Dictionary<string, string?>
                 {
                     ["ConnectionStrings:DefaultConnection"] =
-                        "Server=ZEZOZ\\DATABASE2;Database=TaskFlowDb_Test;Trusted_Connection=True;TrustServerCertificate=True"
+                        Environment.GetEnvironmentVariable("TEST_CONNECTION_STRING")
                 });
             });
 

@@ -12,6 +12,10 @@ jobs:
 
     env:
       TEST_CONNECTION_STRING: "Server=localhost,14330;Database=TaskFlowDb_Test;User Id=sa;Password=${{ secrets.CI_DB_PASSWORD }};TrustServerCertificate=True"
+      Jwt__Key: ${{ secrets.CI_JWT_KEY }}
+      Jwt__Issuer: "TaskFlowAPI"
+      Jwt__Audience: "TaskFlowClient"
+      Jwt__ExpireDays: "7"
 
     services:
       db:

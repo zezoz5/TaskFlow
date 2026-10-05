@@ -62,3 +62,6 @@ jobs:
           client-id: ${{ vars.AZURE_CLIENT_ID }}
           tenant-id: ${{ vars.AZURE_TENANT_ID }}
           subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Build Docker image
+        run: docker build -t taskflowregistery.azurecr.io/taskflow-api:latest .

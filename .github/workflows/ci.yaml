@@ -40,14 +40,6 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 10
-  deploy:
-    needs: build
-    if: github.even_name=='push' && github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-
-    persmissions:
-      id-token: write
-      contents: read
 
     steps:
       # Get repository
@@ -68,9 +60,22 @@ jobs:
       - name: Test
         run: dotnet test
 
+  deploy:
+    needs: build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
       - name: Login to Azure
         uses: azure/login@v2
         with:
-          client-id: ${{vars.AZURE_CLIENT_ID}}
-          tenant-id: ${{vars.AZURE_TENANT_ID}}
-          subscription-id: ${{vars.AZURE_SUBSCRIPTION_ID}}
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}

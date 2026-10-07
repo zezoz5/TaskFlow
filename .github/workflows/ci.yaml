@@ -40,16 +40,8 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 10
-  deploy:
-    needs: build
-    if: github.even_name=='push' && github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
 
-    permissions:
-      id-token: write
-      contents: read
-
-    steps:
+      steps:
       # Get repository
       - name: Checkout code
         uses: actions/checkout@v4
@@ -67,6 +59,19 @@ jobs:
       # Run tests
       - name: Test
         run: dotnet test
+
+  deploy:
+    needs: build
+    if: github.even_name=='push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
       - name: Login to Azure
         uses: azure/login@v2

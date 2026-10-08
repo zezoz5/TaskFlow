@@ -81,4 +81,4 @@ jobs:
           subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
 
       - name: Build Docker Image
-        run: docker build -t taskflowregestery.azurecr.io/taskflow-api:${{ github.sha }} .
+        run: docker build -f Taskmanager.API/Dockerfile -t taskflowregestery.azurecr.io/taskflow-api:${{ github.sha }} .

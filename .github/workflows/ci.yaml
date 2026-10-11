@@ -87,4 +87,4 @@ jobs:
         run: az acr login --name taskflowregistery
 
       - name: Push Docker Image
-        run: docker push taskflowregestery.azurecr.io/taskflow-api:${{ github.sha }}
+        run: docker push taskflowregistery.azurecr.io/taskflow-api:${{ github.sha }}

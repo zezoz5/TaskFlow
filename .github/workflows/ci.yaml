@@ -88,3 +88,10 @@ jobs:
 
       - name: Push Docker Image
         run: docker push taskflowregistery.azurecr.io/taskflow-api:${{ github.sha }}
+
+      - name: Deploy to Azure Container Apps
+        run: |
+          az containerapp update \
+            --name taskflow-api \
+            --resource-group rg-taskflow \
+            --image taskflowregistery.azurecr.io/taskflow-api:${{ github.sha }}

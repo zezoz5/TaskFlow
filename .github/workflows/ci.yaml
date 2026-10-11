@@ -81,7 +81,7 @@ jobs:
           subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
 
       - name: Build Docker Image
-        run: docker build -f TaskManager.API/Dockerfile -t taskflowregestery.azurecr.io/taskflow-api:${{ github.sha }} .
+        run: docker build -f TaskManager.API/Dockerfile -t taskflowregistery.azurecr.io/taskflow-api:${{ github.sha }} .
 
       - name: Login to Azure Container Registry
         run: az acr login --name taskflowregistery
